@@ -36,7 +36,7 @@ public class ListenServiceImpl implements ListenService {
         NodeCache nodeCache = new NodeCache(zookeeperDriverClient, ZookeeperConstant.DRIVER_PATH);
         try{
             //调用start方法开始监听
-            nodeCache.start();
+            nodeCache.start(true);
             //添加NodeCacheListener监听器
             ListenService tmpListenService = this;
             nodeCache.getListenable().addListener(new NodeCacheListener() {
@@ -68,17 +68,23 @@ public class ListenServiceImpl implements ListenService {
     public void driverWatchExecutor() {
         PathChildrenCache pathChildrenCache = new PathChildrenCache(zookeeperDriverClient,ZookeeperConstant.EXECUTOR_ROOT_PATH, false);
         try{
-        pathChildrenCache.start();
+        pathChildrenCache.start(PathChildrenCache.StartMode.NORMAL);
         pathChildrenCache.getListenable().addListener(new PathChildrenCacheListener() {
             @Override
             public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
-                log.info("driver watch catch executor child change===>"+event.getType()+event.getData()+""+event.getInitialData());
+                log.info("driver watch catch executor child change===>"+event.getType()+"   "+event.getData()+"   "+event.getInitialData());
+
                 /**
+                 * CHILD_ADDED
                  * //TODO 自动创建节点线程
                  *             for(int i=0;i<=3;i++){
                  *                 zookeeperExecutorClient.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH+"/1/"+i, "1".getBytes());
                  *             }
+                 *
+                 *             CHILD_REMOVED
                  */
+
+
             }
         });
     }catch (Exception exception){
@@ -93,11 +99,11 @@ public class ListenServiceImpl implements ListenService {
     public void executorWatchExecutor() {
         PathChildrenCache pathChildrenCache = new PathChildrenCache(zookeeperExecutorClient,ZookeeperConstant.EXECUTOR_ROOT_PATH+"/1", false);
         try{
-            pathChildrenCache.start();
+            pathChildrenCache.start(PathChildrenCache.StartMode.NORMAL);
         pathChildrenCache.getListenable().addListener(new PathChildrenCacheListener() {
             @Override
             public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
-                log.info("executor child change===>"+event.getType()+event.getData()+""+event.getInitialData());
+                log.info("executor child change===>"+event.getType()+"   "+event.getData()+"   "+event.getInitialData());
             }
         });
 
