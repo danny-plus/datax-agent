@@ -47,4 +47,20 @@ public class ThreadPoolConfig {
         return service;
     }
 
+    @Bean("zookeeperThreadExecutor")
+    public ThreadPoolTaskExecutor zookeeperThreadExecutor(){
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(3);
+        executor.setMaxPoolSize(5);
+        executor.setQueueCapacity(queueCapacity);
+        executor.setKeepAliveSeconds(keepAliveTime);
+        executor.setThreadNamePrefix(threadNamePrefix);
+
+        // 线程池对拒绝任务的处理策略
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.initialize();
+        return executor;
+    }
+
+
 }

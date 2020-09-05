@@ -2,6 +2,8 @@ package ni.danny.dataxagent.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
+import ni.danny.dataxagent.service.DataxDriverService;
+import ni.danny.dataxagent.service.DataxExecutorService;
 import ni.danny.dataxagent.service.ListenService;
 import ni.danny.dataxagent.service.StartService;
 import org.apache.curator.framework.CuratorFramework;
@@ -31,6 +33,12 @@ public class StartServiceImpl implements StartService {
     @Autowired
     private ListenService listenService;
 
+    @Autowired
+    private DataxExecutorService dataxExecutorService;
+
+    @Autowired
+    private DataxDriverService dataxDriverService;
+
 
     @Override
     public void run(ApplicationArguments applicationArguments) {
@@ -51,8 +59,10 @@ public class StartServiceImpl implements StartService {
         String ip = localHost.getHostAddress();
         try{
             zookeeperDriverClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.DRIVER_PATH, ("http://"+ip+":"+port).getBytes());
+            dataxDriverService.init();
+            listenService.driverWatchExecutor();
         }catch (Exception ex){
-            listenService.watchDriver(zookeeperDriverClient,"http://"+ip+":"+port);
+            listenService.watchDriver("http://"+ip+":"+port);
         }
 
     }
@@ -62,8 +72,11 @@ public class StartServiceImpl implements StartService {
         zookeeperExecutorClient.start();
         try{
             zookeeperExecutorClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.EXECUTOR_ROOT_PATH+"/1", "1".getBytes());
+
+            dataxExecutorService.init();
+            listenService.executorWatchExecutor();
         }catch (Exception ex){
-            listenService.watchExecutor(zookeeperExecutorClient);
+            log.error("executor register failed ==>"+ex);
         }
 
     }
