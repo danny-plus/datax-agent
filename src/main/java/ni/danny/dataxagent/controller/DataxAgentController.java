@@ -29,7 +29,9 @@ public class DataxAgentController {
     @GetMapping("/excuteJob")
     @ResponseBody
     public ResponseDTO excuteJob(@RequestParam String jobId,@RequestParam int taskId,@RequestParam String jobJsonPath) throws Throwable {
-        dataxAgentService.aysncExcuteDataxJob(jobId,taskId,jobJsonPath);
+
+        dataxAgentService.aysncExcuteDataxJob(jobId,new Random().nextInt(999),jobJsonPath);
+
         return new AnsycExcuteRespDTO(RespDTOEnum.SUCCESS.getResponseDTO()
                 ,taskId+"",jobId);
     }
