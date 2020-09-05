@@ -20,6 +20,16 @@ spring:
         server-addr: 192.168.8.2:8848
 ---
 spring:
+  profiles: home
+  cloud:
+    nacos:
+      config:
+        server-addr: 192.168.8.2:8848
+        file-extension: yml
+      discovery:
+        server-addr: 192.168.8.2:8848
+---
+spring:
   profiles: sit
   cloud:
     nacos:

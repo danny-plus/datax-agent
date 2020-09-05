@@ -12,6 +12,12 @@ public class ResponseDTO<T> {
     private String code;
     private String msg;
 
+    public ResponseDTO(ResponseDTO enumsDto,T data){
+        this.code = enumsDto.getCode();
+        this.msg = enumsDto.getMsg();
+        this.data = data;
+    }
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private T data;
 }
