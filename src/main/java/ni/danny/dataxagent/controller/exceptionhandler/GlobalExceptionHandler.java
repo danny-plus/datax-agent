@@ -1,6 +1,7 @@
-package ni.danny.dataxagent.controller;
+package ni.danny.dataxagent.controller.exceptionhandler;
 
 import ni.danny.dataxagent.dto.ResponseDTO;
+import ni.danny.dataxagent.dto.resp.ExceptionRespDTO;
 import ni.danny.dataxagent.enums.RespDTOEnum;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -12,8 +13,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = MissingServletRequestParameterException.class)
     @ResponseBody
-    public ResponseDTO<String> missingServletRequestParameterException(MissingServletRequestParameterException exception){
+    public ResponseDTO missingServletRequestParameterException(MissingServletRequestParameterException exception){
 
-        return new ResponseDTO(RespDTOEnum.BAD_REQUEST.getResponseDTO(),exception.getMessage());
+        return new ExceptionRespDTO(RespDTOEnum.BAD_REQUEST.getResponseDTO(),exception.getMessage());
     }
 }

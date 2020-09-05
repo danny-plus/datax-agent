@@ -1,23 +1,27 @@
 package ni.danny.dataxagent.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
-@Data
-@ToString
-@AllArgsConstructor
-public class ResponseDTO<T> {
+
+public class ResponseDTO {
+    @Getter
+    @Setter
     private String code;
+
+    @Getter
+    @Setter
     private String msg;
 
-    public ResponseDTO(ResponseDTO enumsDto,T data){
+    public ResponseDTO(ResponseDTO enumsDto){
         this.code = enumsDto.getCode();
         this.msg = enumsDto.getMsg();
-        this.data = data;
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private T data;
+    public ResponseDTO(String code,String msg){
+        this.code = code;
+        this.msg = msg;
+    }
+
+
 }

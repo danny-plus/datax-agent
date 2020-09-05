@@ -1,30 +1,37 @@
 package ni.danny.dataxagent.controller;
 
-import com.alibaba.datax.core.Engine;
+import com.alipay.common.tracer.core.context.trace.SofaTraceContext;
+import com.alipay.common.tracer.core.holder.SofaTraceContextHolder;
+import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.dto.ResponseDTO;
+import ni.danny.dataxagent.dto.resp.AnsycExcuteRespDTO;
 import ni.danny.dataxagent.enums.RespDTOEnum;
-import org.springframework.beans.factory.annotation.Value;
+import ni.danny.dataxagent.service.DataxAgentService;
+import org.joda.time.DateTime;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Random;
+
+
 @Slf4j
 @RestController
 public class DataxAgentController {
 
-    @Value("${datax.home}")
-    private String dataxHome;
+    @Autowired
+    private DataxAgentService dataxAgentService;
 
-    @GetMapping("/test")
+    @GetMapping("/excuteJob")
     @ResponseBody
-    public ResponseDTO<Object> test(@RequestParam String jobJsonPath) throws Throwable {
-        System.setProperty("datax.home",dataxHome);
-        String[] dataxArgs = {"-job",jobJsonPath,"-mode","standalone","-jobid","-1"};
-
-        Engine.entry(dataxArgs);
-        return RespDTOEnum.SUCCESS.getResponseDTO();
+    public ResponseDTO excuteJob(@RequestParam String jobId,@RequestParam int taskId,@RequestParam String jobJsonPath) throws Throwable {
+        dataxAgentService.aysncExcuteDataxJob(jobId,taskId,jobJsonPath);
+        return new AnsycExcuteRespDTO(RespDTOEnum.SUCCESS.getResponseDTO()
+                ,taskId+"",jobId);
     }
 
 
