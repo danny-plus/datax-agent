@@ -7,6 +7,7 @@ import ni.danny.dataxagent.service.DataxExecutorService;
 import ni.danny.dataxagent.service.ListenService;
 import ni.danny.dataxagent.service.StartService;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,12 @@ public class StartServiceImpl implements StartService {
     @Autowired
     private DataxDriverService dataxDriverService;
 
+    @Autowired
+    private ConnectionStateListener driverSessionConnectionListener;
+
+    @Autowired
+    private ConnectionStateListener executorSessionConnectionListener;
+
 
     @Override
     public void run(ApplicationArguments applicationArguments) {
@@ -43,6 +50,7 @@ public class StartServiceImpl implements StartService {
     @Override
     public void registerDriver() {
         zookeeperDriverClient.start();
+        zookeeperDriverClient.getConnectionStateListenable().addListener(driverSessionConnectionListener);
         log.info("zookeeper driver client start");
         dataxDriverService.regist();
     }
@@ -50,6 +58,7 @@ public class StartServiceImpl implements StartService {
     @Override
     public void registerExecutor() {
         zookeeperExecutorClient.start();
+        zookeeperExecutorClient.getConnectionStateListenable().addListener(executorSessionConnectionListener);
         log.info("zookeeper executor client start");
         dataxExecutorService.regist();
     }

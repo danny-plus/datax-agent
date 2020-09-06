@@ -1,5 +1,6 @@
 package ni.danny.dataxagent.service;
 
+import ni.danny.dataxagent.dto.DataxDTO;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
@@ -21,6 +22,41 @@ public interface DataxDriverService {
     void executorUp(ChildData data);
 
     void executorDown(ChildData oldData);
+
+    /**
+     * 检查任务分配情况
+     * @param jobId
+     */
+    DataxDTO checkJob(String jobId) throws Exception;
+
+    void splitJob(String jobId);
+
+    /**
+     * 将任务随机分配至执行器
+     * @param jobId
+     * @param taskId
+     */
+    void distributeTask(String jobId,String taskId);
+
+    /**
+     * 给执行器分配具体任务
+     * @param executorPath
+     */
+    void distributeTask(String executorPath);
+
+    /**
+     * 调度器管理，任务执行器节点的变化
+     * @param type
+     * @param oldData
+     * @param data
+     */
+    void manageJobExecutorChange(CuratorCacheListener.Type type, ChildData oldData, ChildData data);
+
+    /**
+     * 调度器发现任务执行器移除了具体任务-表示任务已完成，执行器进行任务删除
+     * @param oldData
+     */
+    void jobExecutorRemoveTask(ChildData oldData);
 
 
 

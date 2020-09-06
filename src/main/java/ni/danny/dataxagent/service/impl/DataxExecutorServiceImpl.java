@@ -7,6 +7,8 @@ import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.service.DataxExecutorService;
 import ni.danny.dataxagent.service.ListenService;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +33,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
     @Override
     public void init() {
+        //检查所有存在的任务执行节点，是否存在自己的任务，如果有则重启任务开始执行
 
     }
 
@@ -41,11 +44,28 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
             init();
             listenService.executorWatchExecutor();
         }catch (Exception ex){
-            /**
-             * 检查节点是否存在，节点ID是否为自己
-             */
-
             log.error("executor regist failed ==>"+ex);
         }
+    }
+
+    @Override
+    public void process(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
+        switch (type.toString()){
+            case "NODE_CREATED":
+                if(data.getPath().split("/").length>=5)
+                createTask(data);
+            break;
+            default: //log.info("other child event "+type);
+                 break;
+        }
+    }
+
+    @Override
+    public void createTask(ChildData data) {
+        log.info("new dispatch job arrive ");
+        //TODO 开始执行任务
+
+
+
     }
 }

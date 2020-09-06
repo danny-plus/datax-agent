@@ -37,7 +37,7 @@ public class ListenServiceImpl implements ListenService {
 
     @Override
     public void watchDriver() {
-        CuratorCache nodeCache = CuratorCache.builder(zookeeperDriverClient, ZookeeperConstant.DRIVER_PATH).build();//new NodeCache(zookeeperDriverClient, ZookeeperConstant.DRIVER_PATH);
+        CuratorCache nodeCache = CuratorCache.builder(zookeeperDriverClient, ZookeeperConstant.DRIVER_PATH).build();
         try{
             //调用start方法开始监听
             nodeCache.start();
@@ -90,18 +90,37 @@ public class ListenServiceImpl implements ListenService {
      */
     @Override
     public void executorWatchExecutor() {
-        CuratorCache pathChildrenCache =CuratorCache.builder(zookeeperExecutorClient, ZookeeperConstant.EXECUTOR_ROOT_PATH+"/"+appInfoComp.getHostnameAndPort()).build();
+        CuratorCache pathChildrenCache =CuratorCache.builder(zookeeperExecutorClient, ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH+"/"+appInfoComp.getHostnameAndPort()).build();
         try{
             pathChildrenCache.start();
         pathChildrenCache.listenable().addListener(  new CuratorCacheListener(){
 
             @Override
             public void event(Type type, ChildData oldData, ChildData data) {
-                log.info("executor child change===>"+type+"   "+oldData+"   "+data);
+                log.info("executor watch job executor child change===>"+type+"   "+oldData+"   "+data);
+                dataxExecutorService.process(type,oldData,data);
             }
         });
         }catch (Exception exception){
             exception.printStackTrace();
         }
+    }
+
+    @Override
+    public void dviverWatchJobExecutor() {
+        CuratorCache pathChildrenCache =CuratorCache.builder(zookeeperExecutorClient, ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH).build();
+        try{
+            pathChildrenCache.start();
+            pathChildrenCache.listenable().addListener(  new CuratorCacheListener(){
+                @Override
+                public void event(Type type, ChildData oldData, ChildData data) {
+                    log.info("driver watch job executor child change===>"+type+"   "+oldData+"   "+data);
+                    dataxDriverService.manageJobExecutorChange(type, oldData, data);
+                }
+            });
+        }catch (Exception exception){
+            exception.printStackTrace();
+        }
+
     }
 }

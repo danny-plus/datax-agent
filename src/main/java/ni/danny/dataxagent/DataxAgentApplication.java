@@ -1,5 +1,8 @@
 package ni.danny.dataxagent;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import ni.danny.dataxagent.constant.ZookeeperConstant;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
@@ -20,12 +23,32 @@ public class DataxAgentApplication {
 
     @Bean
     public CuratorFramework zookeeperDriverClient() {
-        return CuratorFrameworkFactory.newClient(zookeeperAddressAndPort, new RetryNTimes(5, 1000));
+        return CuratorFrameworkFactory
+                .builder()
+                .connectString(zookeeperAddressAndPort)
+                .sessionTimeoutMs(5000)
+                .connectionTimeoutMs(5000)
+                .retryPolicy(new RetryNTimes(5, 1000))
+                .namespace(ZookeeperConstant.NAME_SPACE)
+                .build();
     }
 
     @Bean
     public CuratorFramework zookeeperExecutorClient() {
-        return CuratorFrameworkFactory.newClient(zookeeperAddressAndPort, new RetryNTimes(5, 1000));
+        return CuratorFrameworkFactory
+                .builder()
+                .connectString(zookeeperAddressAndPort)
+                .sessionTimeoutMs(5000)
+                .connectionTimeoutMs(5000)
+                .retryPolicy(new RetryNTimes(5, 1000))
+                .namespace(ZookeeperConstant.NAME_SPACE)
+                .build();
+    }
+
+    @Bean
+    public Gson gson(){
+        GsonBuilder builder = new GsonBuilder();
+        return  builder.create();
     }
 
 }
