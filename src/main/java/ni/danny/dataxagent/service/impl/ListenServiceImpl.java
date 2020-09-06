@@ -1,6 +1,7 @@
 package ni.danny.dataxagent.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import ni.danny.dataxagent.config.AppInfoComp;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.service.DataxDriverService;
 import ni.danny.dataxagent.service.DataxExecutorService;
@@ -31,34 +32,35 @@ public class ListenServiceImpl implements ListenService {
     @Autowired
     private DataxDriverService dataxDriverService;
 
+    @Autowired
+    private AppInfoComp appInfoComp;
+
     @Override
-    public void watchDriver(String info) {
-        NodeCache nodeCache = new NodeCache(zookeeperDriverClient, ZookeeperConstant.DRIVER_PATH);
+    public void watchDriver() {
+        CuratorCache nodeCache = CuratorCache.builder(zookeeperDriverClient, ZookeeperConstant.DRIVER_PATH).build();//new NodeCache(zookeeperDriverClient, ZookeeperConstant.DRIVER_PATH);
         try{
             //调用start方法开始监听
-            nodeCache.start(true);
+            nodeCache.start();
             //添加NodeCacheListener监听器
-            ListenService tmpListenService = this;
-            nodeCache.getListenable().addListener(new NodeCacheListener() {
+
+            nodeCache.listenable().addListener(new CuratorCacheListener() {
                 @Override
-                public void nodeChanged() throws Exception {
-                    if(nodeCache.getCurrentData()==null){
-                        log.info("driver changed ====> removed ");
+                public void event(Type type, ChildData oldData, ChildData data) {
+                    log.info("driver changed ====> {} ",type);
+                    if(type== Type.NODE_DELETED){
                         log.info("sleep random millseconds then try be driver ");
-                        Thread.sleep(new Random().nextInt(3*1000));
                         try{
-                            zookeeperDriverClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.DRIVER_PATH, (info).getBytes());
-                            dataxDriverService.init();
-                        }catch (Exception ex){
-                            tmpListenService.watchDriver(info);
+                            Thread.sleep(new Random().nextInt(3*1000));
+                        }catch (InterruptedException ignore){
+
                         }
+                        dataxDriverService.regist();
                     }
                 }
             });
         }catch (Exception exception){
             exception.printStackTrace();
         }
-
     }
 
     /**
@@ -66,27 +68,18 @@ public class ListenServiceImpl implements ListenService {
      */
     @Override
     public void driverWatchExecutor() {
-        PathChildrenCache pathChildrenCache = new PathChildrenCache(zookeeperDriverClient,ZookeeperConstant.EXECUTOR_ROOT_PATH, false);
+        CuratorCache pathChildrenCache = CuratorCache.builder(zookeeperDriverClient, ZookeeperConstant.EXECUTOR_ROOT_PATH).build();
         try{
-        pathChildrenCache.start(PathChildrenCache.StartMode.NORMAL);
-        pathChildrenCache.getListenable().addListener(new PathChildrenCacheListener() {
-            @Override
-            public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
-                log.info("driver watch catch executor child change===>"+event.getType()+"   "+event.getData()+"   "+event.getInitialData());
-
-                /**
-                 * CHILD_ADDED
-                 * //TODO 自动创建节点线程
-                 *             for(int i=0;i<=3;i++){
-                 *                 zookeeperExecutorClient.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH+"/1/"+i, "1".getBytes());
-                 *             }
-                 *
-                 *             CHILD_REMOVED
-                 */
-
-
-            }
-        });
+        pathChildrenCache.start();
+        pathChildrenCache.listenable().addListener(
+                new CuratorCacheListener(){
+                    @Override
+                    public void event(Type type, ChildData oldData, ChildData data) {
+                        log.info("driver watch catch executor child change===>"+type+"   "+oldData+"   "+data);
+                        dataxDriverService.managerExecutor(type,oldData,data);
+                    }
+                }
+        );
     }catch (Exception exception){
         exception.printStackTrace();
     }
@@ -97,16 +90,16 @@ public class ListenServiceImpl implements ListenService {
      */
     @Override
     public void executorWatchExecutor() {
-        PathChildrenCache pathChildrenCache = new PathChildrenCache(zookeeperExecutorClient,ZookeeperConstant.EXECUTOR_ROOT_PATH+"/1", false);
+        CuratorCache pathChildrenCache =CuratorCache.builder(zookeeperExecutorClient, ZookeeperConstant.EXECUTOR_ROOT_PATH+"/"+appInfoComp.getHostnameAndPort()).build();
         try{
-            pathChildrenCache.start(PathChildrenCache.StartMode.NORMAL);
-        pathChildrenCache.getListenable().addListener(new PathChildrenCacheListener() {
+            pathChildrenCache.start();
+        pathChildrenCache.listenable().addListener(  new CuratorCacheListener(){
+
             @Override
-            public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
-                log.info("executor child change===>"+event.getType()+"   "+event.getData()+"   "+event.getInitialData());
+            public void event(Type type, ChildData oldData, ChildData data) {
+                log.info("executor child change===>"+type+"   "+oldData+"   "+data);
             }
         });
-
         }catch (Exception exception){
             exception.printStackTrace();
         }

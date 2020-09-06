@@ -27,12 +27,6 @@ public class StartServiceImpl implements StartService {
     @Autowired
     private CuratorFramework zookeeperExecutorClient;
 
-    @Value("${server.port}")
-    private String port ;
-
-    @Autowired
-    private ListenService listenService;
-
     @Autowired
     private DataxExecutorService dataxExecutorService;
 
@@ -49,35 +43,14 @@ public class StartServiceImpl implements StartService {
     @Override
     public void registerDriver() {
         zookeeperDriverClient.start();
-        log.info("zookeeper=========== client start");
-        InetAddress localHost = null;
-        try {
-            localHost = Inet4Address.getLocalHost();
-        } catch (UnknownHostException e) {
-            log.error(e.getMessage(),e);
-        }
-        String ip = localHost.getHostAddress();
-        try{
-            zookeeperDriverClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.DRIVER_PATH, ("http://"+ip+":"+port).getBytes());
-            dataxDriverService.init();
-            listenService.driverWatchExecutor();
-        }catch (Exception ex){
-            listenService.watchDriver("http://"+ip+":"+port);
-        }
-
+        log.info("zookeeper driver client start");
+        dataxDriverService.regist();
     }
 
     @Override
     public void registerExecutor() {
         zookeeperExecutorClient.start();
-        try{
-            zookeeperExecutorClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.EXECUTOR_ROOT_PATH+"/1", "1".getBytes());
-
-            dataxExecutorService.init();
-            listenService.executorWatchExecutor();
-        }catch (Exception ex){
-            log.error("executor register failed ==>"+ex);
-        }
-
+        log.info("zookeeper executor client start");
+        dataxExecutorService.regist();
     }
 }
