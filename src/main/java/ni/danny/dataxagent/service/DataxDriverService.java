@@ -58,6 +58,13 @@ public interface DataxDriverService {
      */
     void jobExecutorRemoveTask(ChildData oldData);
 
+    /**
+     * 如果是当前JOB的最后一个任务，则删除JOB，否则什么都不做
+     * @param jobId
+     * @param taskId
+     */
+    void removeJobWhenLastTask(String jobId,String taskId) throws Exception;
+
 
 
 }

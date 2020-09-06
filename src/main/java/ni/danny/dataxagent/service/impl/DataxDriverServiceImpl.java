@@ -13,7 +13,6 @@ import ni.danny.dataxagent.service.ListenService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,11 +48,11 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Override
     public void init() {
-        if(!DRIVER_STATUS_INIT.equals(ZookeeperConstant.updateDriverStatus(null,DRIVER_STATUS_INIT))){
-            log.info("driver init failed, the DRIVER STATUS is wrong");
+        if(!STATUS_INIT.equals(ZookeeperConstant.updateDriverStatus(null,STATUS_INIT))){
+            log.error("driver init failed, the DRIVER STATUS is wrong");
             return ;
         }
-        zookeeperEventList.clear();
+        driverEventList.clear();
         //扫描获取所有JOB及其信息，在本地维护一个HASHMAP
         DataxJobConstant.dataxDTOS.clear();
         try{
@@ -72,9 +71,13 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         }catch (Exception e){
             //TODO: 扫描失败
         }
-        if(DRIVER_STATUS_RUNNING.equals(ZookeeperConstant.updateDriverStatus(DRIVER_STATUS_INIT,DRIVER_STATUS_RUNNING))){
+        //TODO: 扫描执行器
+
+
+        if(STATUS_RUNNING.equals(ZookeeperConstant.updateDriverStatus(STATUS_INIT,STATUS_RUNNING))){
             //重放任务
-           ZookeeperEventDTO zookeeperEventDTO = zookeeperEventList.poll();
+            log.info("driver init finish, start to replay the change, size=[{}]",driverEventList.size());
+           ZookeeperEventDTO zookeeperEventDTO = driverEventList.poll();
            switch (zookeeperEventDTO.getMethod()){
                case "manageJobExecutorChange": manageJobExecutorChange(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
                case "managerExecutor": managerExecutor(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
@@ -89,9 +92,9 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     public void regist() {
         try{
             zookeeperDriverClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.DRIVER_PATH, ("http://"+appInfoComp.getHostnameAndPort()).getBytes());
-            init();
             listenService.driverWatchExecutor();
             listenService.dviverWatchJobExecutor();
+            init();
         }catch (Exception ex){
             try{
                 Stat stat =  zookeeperDriverClient.checkExists().forPath(ZookeeperConstant.DRIVER_PATH);
@@ -100,9 +103,9 @@ public class DataxDriverServiceImpl implements DataxDriverService {
                 }else{
                     String info =  new String(zookeeperDriverClient.getData().forPath(ZookeeperConstant.DRIVER_PATH));
                     if(("http://"+appInfoComp.getHostnameAndPort()).equals(info)){
-                        init();
                         listenService.driverWatchExecutor();
                         listenService.dviverWatchJobExecutor();
+                        init();
                     }else{
                         listenService.watchDriver();
                     }
@@ -116,10 +119,11 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     @Override
     public void managerExecutor(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
         //调度器初始化未完成，则不进行相关工作调度
-        if(!DRIVER_STATUS_RUNNING.equals(ZookeeperConstant.driverStatus)){
+        if(!STATUS_RUNNING.equals(ZookeeperConstant.driverStatus)){
             //调度器初始化未完成，则不进行相关工作调度
             //将初始化期间的事件信息塞入队列中
-            zookeeperEventList.add(new ZookeeperEventDTO("managerExecutor",type,oldData,data));
+            log.info("driver status is not running ==>");
+            driverEventList.add(new ZookeeperEventDTO("managerExecutor",type,oldData,data));
             return ;
         }
         switch (type.toString()){
@@ -131,7 +135,18 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Override
     public void executorUp(ChildData data) {
-        //TODO: 小心来自初始化期间的重放
+
+        //检查节点当前是否存在
+        try{
+            Stat stat = zookeeperDriverClient.checkExists().forPath(data.getPath());
+            if(stat == null){
+                //重放时，将上线-下线的记录，转换成了，下线->上线，其实执行器已经离线
+                return ;
+            }
+        }catch (Exception ex){
+            log.error("check executor is up failed, because of the error =>",ex);
+            return;
+        }
         String executorInfo = data.getPath().replace(ZookeeperConstant.EXECUTOR_ROOT_PATH,"");
         if(executorInfo.isEmpty()){
             return;
@@ -152,7 +167,16 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Override
     public void executorDown(ChildData oldData) {
-        //TODO: 小心来自初始化期间的重放
+        try{
+            Stat stat = zookeeperDriverClient.checkExists().forPath(oldData.getPath());
+            if(stat!=null){
+                //重放时，将下线-上线的记录，转换成了，上线->下线，其实执行器已经恢复在线
+                return ;
+            }
+        }catch (Exception ex){
+            log.error("check executor is down failed, because of the error =>",ex);
+            return;
+        }
         // 终端掉线后，主动请求终端检查状态是否健康（每2分钟）（健康则等待其上线，异常则创建KAFKA消费者，观察终端下挂任务是否还在执行）
         //检查是否执行中的任务，未执行的将会被收回
         String executorInfo = oldData.getPath().replace(ZookeeperConstant.EXECUTOR_ROOT_PATH,"");
@@ -220,21 +244,19 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     @Override
     public void distributeTask(String executorPath) {
         //TODO 分配任务，找到未分配的任务进行分配
-
-
+        log.info("====>"+executorPath);
 
     }
 
     @Override
     public void manageJobExecutorChange(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
-        if(!DRIVER_STATUS_RUNNING.equals(ZookeeperConstant.driverStatus)){
+        if(!STATUS_RUNNING.equals(ZookeeperConstant.driverStatus)){
             //调度器初始化未完成，则不进行相关工作调度
             //将初始化期间的事件信息塞入队列中
-            zookeeperEventList.add(new ZookeeperEventDTO("manageJobExecutorChange",type,oldData,data));
+            driverEventList.add(new ZookeeperEventDTO("manageJobExecutorChange",type,oldData,data));
 
             return ;
         }
-
         switch (type.toString()){
             case "NODE_DELETED":
                 //判断不是任务执行器节点因执行器节点下线而被回收
@@ -248,11 +270,46 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Override
     public void jobExecutorRemoveTask(ChildData oldData) {
-        //TODO: 小心来自初始化期间的重放
         log.info(" executor finish task ,taskid = [{}]",oldData.getPath());
-        //检查任务是否真的删除[执行完毕]
+        String[] pathInfo = oldData.getPath().split("/");
+        String jobInfo = pathInfo[pathInfo.length-1];
+        String threadId = pathInfo[pathInfo.length-2];
+        String executor = pathInfo[pathInfo.length-3];
+        try{
+            String[] job = jobInfo.split(ZookeeperConstant.JOB_TASK_SPLIT_TAG);
+                removeJobWhenLastTask(job[0],job[1]);
+                distributeTask(JOB_EXECUTOR_ROOT_PATH+"/"+executor+"/"+threadId);
 
+        }catch (Exception ex){
+            log.error("removeJobWhenLastTask error =>",ex);
+        }
+    }
 
+    @Override
+    public void removeJobWhenLastTask(String jobId, String taskId) throws Exception {
+        Stat jobStat = zookeeperDriverClient.checkExists().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH+"/"+jobId);
+        if(jobStat==null){
+            return ;
+        }
+        List<String> taskPaths = zookeeperDriverClient.getChildren().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH+"/"+jobId);
+        Stat stat = zookeeperDriverClient.checkExists().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH+"/"+jobId+"/"+taskId);
+        if(stat!=null){
+            zookeeperDriverClient.delete().guaranteed().deletingChildrenIfNeeded().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH+"/"+jobId+"/"+taskId);
+            if(taskPaths!=null&&taskPaths.size()==1){
+                checkAndRemoveJob(jobId);
+            }
+        }else{
+            if(taskPaths==null||taskPaths.size()<=0){
+                checkAndRemoveJob(jobId);
+            }
+        }
+    }
 
+    private void checkAndRemoveJob(String jobId)throws Exception {
+        Stat jobStat = zookeeperDriverClient.checkExists().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH+"/"+jobId);
+        if(jobStat!=null){
+            zookeeperDriverClient.setData().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH+"/"+jobId,DataxJobConstant.JOB_FINISH.getBytes());
+            zookeeperDriverClient.delete().guaranteed().deletingChildrenIfNeeded().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH+"/"+jobId);
+        }
     }
 }

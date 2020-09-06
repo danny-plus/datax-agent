@@ -14,15 +14,19 @@ public class ZookeeperConstant {
 
     public final static String JOB_LIST_ROOT_PATH = "/job/list";
 
-    public final static String JOB_TASK_SPLIT_TAG = "^-^";
+    public final static String JOB_TASK_SPLIT_TAG = "-";
 
-    public final static ConcurrentLinkedQueue<ZookeeperEventDTO> zookeeperEventList = new ConcurrentLinkedQueue<>();
+    public final static ConcurrentLinkedQueue<ZookeeperEventDTO> driverEventList = new ConcurrentLinkedQueue<>();
+
+    public final static ConcurrentLinkedQueue<ZookeeperEventDTO> executorEventList = new ConcurrentLinkedQueue<>();
 
     public static String driverStatus = "INIT";
 
-    public static String DRIVER_STATUS_INIT="INIT";
+    public static String executorStatus = "INIT";
 
-    public static String DRIVER_STATUS_RUNNING = "RUNNING";
+    public static String STATUS_INIT="INIT";
+
+    public static String STATUS_RUNNING = "RUNNING";
 
     public static synchronized String updateDriverStatus(String oldStatus,String newStatus){
         if(oldStatus==null||oldStatus.equals(driverStatus)){
@@ -30,6 +34,15 @@ public class ZookeeperConstant {
             return ZookeeperConstant.driverStatus;
         }else{
             return driverStatus;
+        }
+    }
+
+    public static synchronized String updateExecutorStatus(String oldStatus,String newStatus){
+        if(oldStatus==null||oldStatus.equals(executorStatus)){
+            ZookeeperConstant.executorStatus = newStatus;
+            return ZookeeperConstant.executorStatus;
+        }else{
+            return executorStatus;
         }
     }
 
