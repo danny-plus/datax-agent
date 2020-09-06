@@ -7,6 +7,7 @@ import ni.danny.dataxagent.config.AppInfoComp;
 import ni.danny.dataxagent.constant.DataxJobConstant;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.dto.DataxDTO;
+import ni.danny.dataxagent.dto.ZookeeperEventDTO;
 import ni.danny.dataxagent.service.DataxDriverService;
 import ni.danny.dataxagent.service.ListenService;
 import org.apache.curator.framework.CuratorFramework;
@@ -23,8 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static ni.danny.dataxagent.constant.ZookeeperConstant.DRIVER_STATUS_INIT;
-import static ni.danny.dataxagent.constant.ZookeeperConstant.DRIVER_STATUS_RUNNING;
+import static ni.danny.dataxagent.constant.ZookeeperConstant.*;
 
 @Slf4j
 @Service
@@ -53,6 +53,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
             log.info("driver init failed, the DRIVER STATUS is wrong");
             return ;
         }
+        zookeeperEventList.clear();
         //扫描获取所有JOB及其信息，在本地维护一个HASHMAP
         DataxJobConstant.dataxDTOS.clear();
         try{
@@ -71,7 +72,16 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         }catch (Exception e){
             //TODO: 扫描失败
         }
-        ZookeeperConstant.updateDriverStatus(DRIVER_STATUS_INIT,DRIVER_STATUS_RUNNING);
+        if(DRIVER_STATUS_RUNNING.equals(ZookeeperConstant.updateDriverStatus(DRIVER_STATUS_INIT,DRIVER_STATUS_RUNNING))){
+            //重放任务
+           ZookeeperEventDTO zookeeperEventDTO = zookeeperEventList.poll();
+           switch (zookeeperEventDTO.getMethod()){
+               case "manageJobExecutorChange": manageJobExecutorChange(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
+               case "managerExecutor": managerExecutor(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
+               default:break;
+           }
+
+        }
     }
 
 
@@ -108,6 +118,8 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         //调度器初始化未完成，则不进行相关工作调度
         if(!DRIVER_STATUS_RUNNING.equals(ZookeeperConstant.driverStatus)){
             //调度器初始化未完成，则不进行相关工作调度
+            //将初始化期间的事件信息塞入队列中
+            zookeeperEventList.add(new ZookeeperEventDTO("managerExecutor",type,oldData,data));
             return ;
         }
         switch (type.toString()){
@@ -119,6 +131,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Override
     public void executorUp(ChildData data) {
+        //TODO: 小心来自初始化期间的重放
         String executorInfo = data.getPath().replace(ZookeeperConstant.EXECUTOR_ROOT_PATH,"");
         if(executorInfo.isEmpty()){
             return;
@@ -139,6 +152,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Override
     public void executorDown(ChildData oldData) {
+        //TODO: 小心来自初始化期间的重放
         // 终端掉线后，主动请求终端检查状态是否健康（每2分钟）（健康则等待其上线，异常则创建KAFKA消费者，观察终端下挂任务是否还在执行）
         //检查是否执行中的任务，未执行的将会被收回
         String executorInfo = oldData.getPath().replace(ZookeeperConstant.EXECUTOR_ROOT_PATH,"");
@@ -215,19 +229,30 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     public void manageJobExecutorChange(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
         if(!DRIVER_STATUS_RUNNING.equals(ZookeeperConstant.driverStatus)){
             //调度器初始化未完成，则不进行相关工作调度
+            //将初始化期间的事件信息塞入队列中
+            zookeeperEventList.add(new ZookeeperEventDTO("manageJobExecutorChange",type,oldData,data));
+
             return ;
         }
+
         switch (type.toString()){
             case "NODE_DELETED":
                 //判断不是任务执行器节点因执行器节点下线而被回收
-                if(oldData.getPath().split("/").length>=5)
-                jobExecutorRemoveTask(oldData); break;
+                if(oldData.getPath().split("/").length>=5){
+                    jobExecutorRemoveTask(oldData);
+                }
+                break;
             default:break;
         }
     }
 
     @Override
     public void jobExecutorRemoveTask(ChildData oldData) {
+        //TODO: 小心来自初始化期间的重放
         log.info(" executor finish task ,taskid = [{}]",oldData.getPath());
+        //检查任务是否真的删除[执行完毕]
+
+
+
     }
 }

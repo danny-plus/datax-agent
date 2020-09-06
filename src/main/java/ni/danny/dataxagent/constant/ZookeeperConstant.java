@@ -1,5 +1,9 @@
 package ni.danny.dataxagent.constant;
 
+import ni.danny.dataxagent.dto.ZookeeperEventDTO;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 public class ZookeeperConstant {
     public final static String NAME_SPACE = "datax-agent";
     public final static String DRIVER_PATH = "/driver";
@@ -11,6 +15,8 @@ public class ZookeeperConstant {
     public final static String JOB_LIST_ROOT_PATH = "/job/list";
 
     public final static String JOB_TASK_SPLIT_TAG = "^-^";
+
+    public final static ConcurrentLinkedQueue<ZookeeperEventDTO> zookeeperEventList = new ConcurrentLinkedQueue<>();
 
     public static String driverStatus = "INIT";
 
