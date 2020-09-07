@@ -17,8 +17,10 @@
         <AsyncLogger name="com.alibaba.datax" level="INFO">
             <AppenderRef ref="KafkaLog"/>
         </AsyncLogger>
-        <!-- 临时，用于功能测试 -->
-        <AsyncLogger name="org.springframework.aop.interceptor" level="INFO">
+        <AsyncLogger name="ni.danny.dataxagent.service.DataxAgentService" level="INFO">
+            <AppenderRef ref="KafkaLog"/>
+        </AsyncLogger>
+        <AsyncLogger name="ni.danny.dataxagent.service.impl.DataxAgentServiceImpl" level="INFO">
             <AppenderRef ref="KafkaLog"/>
         </AsyncLogger>
     </Loggers>

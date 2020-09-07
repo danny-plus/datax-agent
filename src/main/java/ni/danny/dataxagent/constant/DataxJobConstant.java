@@ -5,6 +5,7 @@ import ni.danny.dataxagent.dto.DataxLogDTO;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DataxJobConstant {
     /**
@@ -16,5 +17,9 @@ public class DataxJobConstant {
 
     public final static String JOB_FINISH = "FINISH";
 
+    public final static String TASK_FINISH = "FINISH";
+
     public final static String EXECUTOR_HEALTH_CHECK_URL = "/actuator/health";
+
+    public static AtomicInteger executorThreadNum = new AtomicInteger(0);
 }

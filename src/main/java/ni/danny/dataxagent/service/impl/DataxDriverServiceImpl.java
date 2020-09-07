@@ -419,7 +419,11 @@ public class DataxDriverServiceImpl implements DataxDriverService {
             case "NODE_DELETED":
                 //判断不是任务执行器节点因执行器节点下线而被回收
                 if(oldData.getPath().split("/").length>=5){
-                    jobExecutorRemoveTask(oldData);
+                    try{
+                        jobExecutorRemoveTask(oldData);
+                    }catch (Exception ex){
+                        //TODO
+                    }
                 }
                 break;
             default:break;
@@ -427,7 +431,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     }
 
     @Override
-    public void jobExecutorRemoveTask(ChildData oldData) {
+    public void jobExecutorRemoveTask(ChildData oldData) throws Exception {
         log.info(" executor finish task ,taskid = [{}]",oldData.getPath());
         String[] pathInfo = oldData.getPath().split("/");
         if(pathInfo.length<=5){
@@ -438,9 +442,20 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         String jobInfo = pathInfo[pathInfo.length-1];
         String threadId = pathInfo[pathInfo.length-2];
         String executor = pathInfo[pathInfo.length-3];
+        /**区分场景**/
+        String[] job = jobInfo.split(JOB_TASK_SPLIT_TAG);
+        //无足够的资源做任务
+        String info = new String(zookeeperDriverClient.getData().forPath(JOB_LIST_ROOT_PATH+"/"+job[0]+"/"+job[1]));
+        if(!DataxJobConstant.TASK_FINISH.equals(info)){
+            //回收分配的任务，并重新分配
+            zookeeperDriverClient.delete().deletingChildrenIfNeeded().forPath(JOB_LIST_ROOT_PATH+"/"+job[0]+"/"+job[1]+"/"+executor);
+            waitForExecutorJobTaskSet.add(jobInfo);
+            driverEventList.add(new ZookeeperEventDTO("distributeTask", CuratorCacheListener.Type.NODE_CREATED,new ChildData(job[0],null,"".getBytes()),new ChildData(job[1],null,"".getBytes()),1*1000));
+            return ;
+        }
+        //任务已完成
         idleExecutorThreadSet.add(executor+"/"+threadId);
         try{
-            String[] job = jobInfo.split(ZookeeperConstant.JOB_TASK_SPLIT_TAG);
                 removeJobWhenLastTask(job[0],job[1]);
                 distributeTask(JOB_EXECUTOR_ROOT_PATH+"/"+executor+"/"+threadId);
 

@@ -56,7 +56,7 @@ public interface DataxDriverService {
      * 调度器发现任务执行器移除了具体任务-表示任务已完成，执行器进行任务删除
      * @param oldData
      */
-    void jobExecutorRemoveTask(ChildData oldData);
+    void jobExecutorRemoveTask(ChildData oldData) throws Exception;
 
     /**
      * 如果是当前JOB的最后一个任务，则删除JOB，否则什么都不做
