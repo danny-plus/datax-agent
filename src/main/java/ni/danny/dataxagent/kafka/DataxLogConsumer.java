@@ -48,8 +48,8 @@ public class DataxLogConsumer {
             String taskId = jobInfo[1];
             String traceId = jobInfo[2];
             String jobKey = jobId+ZookeeperConstant.JOB_TASK_SPLIT_TAG+taskId;
-            if(DataxJobConstant.excutorKafkaLogs.get(jobKey)!=null){
-                DataxLogDTO dto = DataxJobConstant.excutorKafkaLogs.get(jobKey);
+            if(DataxJobConstant.executorKafkaLogs.get(jobKey)!=null){
+                DataxLogDTO dto = DataxJobConstant.executorKafkaLogs.get(jobKey);
                 if(timestamp>=dto.getTimestamp()){
                     dto.setTimestamp(timestamp);
                     dto.setTraceId(traceId);
@@ -60,7 +60,7 @@ public class DataxLogConsumer {
                 dto.setTimestamp(timestamp);
                 dto.setJobId(jobId);
                 dto.setTaskId(taskId);
-                DataxJobConstant.excutorKafkaLogs.put(jobKey,dto);
+                DataxJobConstant.executorKafkaLogs.put(jobKey,dto);
             }
         }
      }

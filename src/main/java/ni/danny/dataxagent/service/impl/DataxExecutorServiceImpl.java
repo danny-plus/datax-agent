@@ -46,14 +46,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
 
 
-
-        if(STATUS_RUNNING.equals(ZookeeperConstant.updateExecutorStatus(STATUS_INIT,STATUS_RUNNING))){
-            ZookeeperEventDTO zookeeperEventDTO = executorEventList.poll();
-            switch (zookeeperEventDTO.getMethod()){
-                case "process": process(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
-                default: break;
-            }
-        }
+        ZookeeperConstant.updateExecutorStatus(STATUS_INIT,STATUS_RUNNING);
     }
 
     @Override
@@ -70,7 +63,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
     @Override
     public void process(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
         if(!STATUS_RUNNING.equals(executorStatus)){
-            executorEventList.add(new ZookeeperEventDTO("process",type,oldData,data));
+            executorEventList.add(new ZookeeperEventDTO("process",type,oldData,data,1*1000));
             return;
         }
 

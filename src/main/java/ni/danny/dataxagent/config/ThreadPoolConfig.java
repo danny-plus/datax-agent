@@ -31,19 +31,17 @@ public class ThreadPoolConfig {
     private static final String threadNamePrefix = "datax-agent-";
 
     @Bean("agentExecutor")
-    public TracedExecutorService agentExecutor(){
-        ExecutorService executor = Executors.newFixedThreadPool(corePoolSize);
-//        executor.setCorePoolSize(corePoolSize);
-//        executor.setMaxPoolSize(maxPoolSize);
-//        executor.setQueueCapacity(queueCapacity);
-//        executor.setKeepAliveSeconds(keepAliveTime);
-//        executor.setThreadNamePrefix(threadNamePrefix);
-//
-//        // 线程池对拒绝任务的处理策略
-//        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-//        executor.initialize();
-
-        TracedExecutorService service = new TracedExecutorService(executor);
+    public DataxAgentExecutorService agentExecutor(){
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(3);
+        executor.setMaxPoolSize(5);
+        executor.setQueueCapacity(queueCapacity);
+        executor.setKeepAliveSeconds(keepAliveTime);
+        executor.setThreadNamePrefix(threadNamePrefix);
+        // 线程池对拒绝任务的处理策略
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.initialize();
+        DataxAgentExecutorService service = new DataxAgentExecutorService(executor);
         return service;
     }
 
@@ -54,8 +52,35 @@ public class ThreadPoolConfig {
         executor.setMaxPoolSize(5);
         executor.setQueueCapacity(queueCapacity);
         executor.setKeepAliveSeconds(keepAliveTime);
-        executor.setThreadNamePrefix(threadNamePrefix);
+        executor.setThreadNamePrefix("zookeeperThreadExecutor-");
+        // 线程池对拒绝任务的处理策略
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.initialize();
+        return executor;
+    }
 
+    @Bean("driverReplayThreadExecutor")
+    public ThreadPoolTaskExecutor driverReplayThreadExecutor(){
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(2);
+        executor.setQueueCapacity(0);
+        executor.setKeepAliveSeconds(keepAliveTime);
+        executor.setThreadNamePrefix("driverReplayThreadExecutor-");
+        // 线程池对拒绝任务的处理策略
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean("executorReplayThreadExecutor")
+    public ThreadPoolTaskExecutor executorReplayThreadExecutor(){
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(2);
+        executor.setQueueCapacity(0);
+        executor.setKeepAliveSeconds(keepAliveTime);
+        executor.setThreadNamePrefix("executorReplayThreadExecutor-");
         // 线程池对拒绝任务的处理策略
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.initialize();

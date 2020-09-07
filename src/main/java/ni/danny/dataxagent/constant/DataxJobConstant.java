@@ -12,7 +12,9 @@ public class DataxJobConstant {
      */
     public static ConcurrentSkipListSet<DataxDTO> dataxDTOS = new ConcurrentSkipListSet<>();
 
-    public static ConcurrentHashMap<String, DataxLogDTO> excutorKafkaLogs = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String, DataxLogDTO> executorKafkaLogs = new ConcurrentHashMap<>();
 
     public final static String JOB_FINISH = "FINISH";
+
+    public final static String EXECUTOR_HEALTH_CHECK_URL = "/actuator/health";
 }

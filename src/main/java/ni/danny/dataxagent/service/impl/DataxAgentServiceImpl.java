@@ -28,7 +28,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
 
     @Override
     @Async("agentExecutor")
-    public void aysncExcuteDataxJob(String jobId,int taskId,String jobJsonFilePath) throws Throwable {
+    public void asyncExecuteDataxJob(String jobId,int taskId,String jobJsonFilePath) throws Throwable {
         SofaTraceContext sofaTraceContext = SofaTraceContextHolder.getSofaTraceContext();
         SofaTracerSpan sofaTracerSpan = sofaTraceContext.getCurrentSpan();
         sofaTracerSpan.setBaggageItem("DATAX-JOBID",jobId);

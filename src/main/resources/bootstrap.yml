@@ -1,11 +1,13 @@
 spring:
   application:
     name: datax-agent
-mamanagement:
-  endpoints:
+management:
+  endpoint:
     web:
       exposure:
         include: 'loggers'
+    health:
+      show-details: ALWAYS
 logging:
   config: classpath:log4j2.xml
   #http://${spring.cloud.nacos.config.server-addr}/nacos/v1/cs/configs?dataId=log4j2.xml&group=DEFAULT_GROUP&tenant=public

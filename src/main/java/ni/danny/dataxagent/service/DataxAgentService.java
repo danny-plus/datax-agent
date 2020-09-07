@@ -10,5 +10,5 @@ public interface DataxAgentService {
      * @param jobJsonFilePath
      * @throws Throwable
      */
-    void aysncExcuteDataxJob(String jobId,int taskId,String jobJsonFilePath) throws Throwable;
+    void asyncExecuteDataxJob(String jobId,int taskId,String jobJsonFilePath) throws Throwable;
 }

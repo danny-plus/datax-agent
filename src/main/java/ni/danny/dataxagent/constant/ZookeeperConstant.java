@@ -4,6 +4,7 @@ import ni.danny.dataxagent.dto.ZookeeperEventDTO;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.DelayQueue;
 
 public class ZookeeperConstant {
     public final static String NAME_SPACE = "datax-agent";
@@ -17,9 +18,11 @@ public class ZookeeperConstant {
 
     public final static String JOB_TASK_SPLIT_TAG = "-";
 
-    public final static ConcurrentLinkedQueue<ZookeeperEventDTO> driverEventList = new ConcurrentLinkedQueue<>();
+    public static String driverName = null ;
 
-    public final static ConcurrentLinkedQueue<ZookeeperEventDTO> executorEventList = new ConcurrentLinkedQueue<>();
+    public final static DelayQueue<ZookeeperEventDTO> driverEventList = new DelayQueue<>();
+
+    public final static DelayQueue<ZookeeperEventDTO> executorEventList = new DelayQueue<>();
 
     public final static ConcurrentSkipListSet<String> onlineExecutorSet = new ConcurrentSkipListSet<>();
 
@@ -33,8 +36,8 @@ public class ZookeeperConstant {
 
     public static synchronized String updateDriverStatus(String oldStatus,String newStatus){
         if(oldStatus==null||oldStatus.equals(driverStatus)){
-            ZookeeperConstant.driverStatus = newStatus;
-            return ZookeeperConstant.driverStatus;
+            driverStatus = newStatus;
+            return driverStatus;
         }else{
             return driverStatus;
         }
@@ -42,10 +45,19 @@ public class ZookeeperConstant {
 
     public static synchronized String updateExecutorStatus(String oldStatus,String newStatus){
         if(oldStatus==null||oldStatus.equals(executorStatus)){
-            ZookeeperConstant.executorStatus = newStatus;
-            return ZookeeperConstant.executorStatus;
+            executorStatus = newStatus;
+            return executorStatus;
         }else{
             return executorStatus;
+        }
+    }
+
+    public static synchronized String updateDriverName(String oldName,String name){
+        if(oldName==null || oldName.equals(driverName)){
+            driverName = name;
+            return driverName;
+        }else{
+            return driverName;
         }
     }
 

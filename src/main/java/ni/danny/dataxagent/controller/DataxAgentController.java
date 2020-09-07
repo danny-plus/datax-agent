@@ -29,7 +29,7 @@ public class DataxAgentController {
     @GetMapping("/excuteJob")
     @ResponseBody
     public ResponseDTO excuteJob(@RequestParam String jobId,@RequestParam int taskId,@RequestParam String jobJsonPath) throws Throwable {
-        dataxAgentService.aysncExcuteDataxJob(jobId,new Random().nextInt(999),jobJsonPath);
+        dataxAgentService.asyncExecuteDataxJob(jobId,new Random().nextInt(999),jobJsonPath);
         SofaTraceContext sofaTraceContext = SofaTraceContextHolder.getSofaTraceContext();
         SofaTracerSpan sofaTracerSpan = sofaTraceContext.getCurrentSpan();
 

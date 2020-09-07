@@ -29,7 +29,7 @@ public interface DataxDriverService {
      */
     DataxDTO checkJob(String jobId) throws Exception;
 
-    void splitJob(String jobId);
+    void splitJob(String jobId,DataxDTO jobDto);
 
     /**
      * 将任务随机分配至执行器

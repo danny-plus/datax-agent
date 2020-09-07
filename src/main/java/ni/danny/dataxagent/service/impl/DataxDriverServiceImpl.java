@@ -6,25 +6,31 @@ import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.config.AppInfoComp;
 import ni.danny.dataxagent.constant.DataxJobConstant;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
+import ni.danny.dataxagent.dto.ActuatorHealthDTO;
 import ni.danny.dataxagent.dto.DataxDTO;
 import ni.danny.dataxagent.dto.ZookeeperEventDTO;
 import ni.danny.dataxagent.kafka.DataxLogConsumer;
 import ni.danny.dataxagent.service.DataxDriverService;
+import ni.danny.dataxagent.service.DriverEventReplayService;
 import ni.danny.dataxagent.service.ListenService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import static ni.danny.dataxagent.constant.ZookeeperConstant.*;
+import static ni.danny.dataxagent.constant.ZookeeperConstant.updateDriverName;
 
 @Slf4j
 @Service
@@ -45,6 +51,9 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     @Autowired
     private DataxLogConsumer dataxLogConsumer;
 
+    @Autowired
+    private RestTemplate restTemplate;
+
 
     @Value("${datax.excutor.pool.maxPoolSize}")
     private int maxPoolSize;
@@ -57,6 +66,8 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         }
         driverEventList.clear();
 
+        updateDriverName(driverName,appInfoComp.getHostnameAndPort());
+
         DataxJobConstant.dataxDTOS.clear();
         ZookeeperConstant.onlineExecutorSet.clear();
         try{
@@ -66,7 +77,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
                 for(String path:executorPaths){
                     String onlineExecutorPath = path.replace(EXECUTOR_ROOT_PATH,"");
                     onlineExecutorSet.add(onlineExecutorPath);
-                    driverEventList.add(new ZookeeperEventDTO("managerExecutor",CuratorCacheListener.Type.NODE_CREATED,null,new ChildData(path,new Stat(),"".getBytes())));
+                    driverEventList.add(new ZookeeperEventDTO("managerExecutor",CuratorCacheListener.Type.NODE_CREATED,null,new ChildData(path,new Stat(),"".getBytes()),2*1000));
                 }
             }
             //扫描所有的任务执行器，如果在线执行器SET中没有，则放入一个下线事件
@@ -76,7 +87,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
                     String jobExecutorPath = path.replace(JOB_EXECUTOR_ROOT_PATH,"");
                     log.info("jobExecutorPath==[{}]",jobExecutorPath);
                     if(!onlineExecutorSet.contains(jobExecutorPath)){
-                        driverEventList.add(new ZookeeperEventDTO("managerExecutor",CuratorCacheListener.Type.NODE_DELETED,null,new ChildData(path,new Stat(),"".getBytes())));
+                        driverEventList.add(new ZookeeperEventDTO("managerExecutor",CuratorCacheListener.Type.NODE_DELETED,null,new ChildData(path,new Stat(),"".getBytes()),2*1000));
                     }
                 }
             }
@@ -103,17 +114,9 @@ public class DataxDriverServiceImpl implements DataxDriverService {
             //TODO: 扫描失败
         }
 
-
         if(STATUS_RUNNING.equals(ZookeeperConstant.updateDriverStatus(STATUS_INIT,STATUS_RUNNING))){
             listenService.driverWatchKafkaMsg();
-            //重放任务
-            log.info("driver init finish, start to replay the change, size=[{}]",driverEventList.size());
-           ZookeeperEventDTO zookeeperEventDTO = driverEventList.poll();
-           switch (zookeeperEventDTO.getMethod()){
-               case "manageJobExecutorChange": manageJobExecutorChange(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
-               case "managerExecutor": managerExecutor(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
-               default:break;
-           }
+            //启动延时队列对失败处理进行重放
 
         }
     }
@@ -122,7 +125,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     @Override
     public void regist() {
         try{
-            DataxJobConstant.excutorKafkaLogs.clear();
+            DataxJobConstant.executorKafkaLogs.clear();
             zookeeperDriverClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.DRIVER_PATH, ("http://"+appInfoComp.getHostnameAndPort()).getBytes());
             listenService.driverWatchExecutor();
             listenService.driverWatchJobExecutor();
@@ -139,12 +142,14 @@ public class DataxDriverServiceImpl implements DataxDriverService {
                         listenService.driverWatchJobExecutor();
                         init();
                     }else{
+                        updateDriverName(driverName,null);
                         stopListenKafka(0);
                         listenService.watchDriver();
                     }
                 }
 
             }catch (Exception ignore){}
+            updateDriverName(driverName,null);
             stopListenKafka(0);
             listenService.watchDriver();
         }
@@ -157,7 +162,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
             //调度器初始化未完成，则不进行相关工作调度
             //将初始化期间的事件信息塞入队列中
             log.info("driver status is not running ==>");
-            driverEventList.add(new ZookeeperEventDTO("managerExecutor",type,oldData,data));
+            driverEventList.add(new ZookeeperEventDTO("managerExecutor",type,oldData,data,2*1000));
             return ;
         }
         switch (type.toString()){
@@ -200,7 +205,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     }
 
     @Override
-    public void executorDown(ChildData oldData) {
+    public void executorDown(ChildData oldData)  {
         try{
             Stat stat = zookeeperDriverClient.checkExists().forPath(oldData.getPath());
             if(stat!=null){
@@ -230,14 +235,61 @@ public class DataxDriverServiceImpl implements DataxDriverService {
             //TODO: 任务检查失败场景
         }
         if(!allDel){
-            //TODO
             //调用执行器接口，同步检查执行器是否还活着
+            try{
+                ActuatorHealthDTO actuatorHealthDTO = restTemplate.getForObject("http://"+executorInfo+DataxJobConstant.EXECUTOR_HEALTH_CHECK_URL, ActuatorHealthDTO.class);
+                if(!"UP".equals(actuatorHealthDTO.getStatus())||!"UP".equals(actuatorHealthDTO.getComponents().getDataxAgentExecutorPool().getStatus())){
+                    allDel = removeExecutorThreadByKafkaMsg(executorInfo,oldData);
+                }
+            }catch (Exception ex){
+                try{
+                    allDel = removeExecutorThreadByKafkaMsg(executorInfo,oldData);
+                }catch (Exception exception){
 
-            //如果执行器超时无返回，则启动KAFKA消费者，监控是否有任务日志
-
-            //如果15分钟内无任务日志，则回收执行器信息[包括删除JOB-TASK-执行器信息]，并重新指派任务
+                    driverEventList.add(new ZookeeperEventDTO("managerExecutor",CuratorCacheListener.Type.NODE_DELETED,oldData,null,120*1000));
+                    return;
+                }
+            }
+        }
+        //如果15分钟内无任务日志，则回收执行器信息[包括删除JOB-TASK-执行器信息]，并重新指派任务
+        if(allDel){
+            try{
+                zookeeperDriverClient.delete().guaranteed().forPath(ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH+executorInfo);
+            }catch (Exception ex){
+                driverEventList.add(new ZookeeperEventDTO("managerExecutor",CuratorCacheListener.Type.NODE_DELETED,oldData,null,120*1000));
+            }
 
         }
+
+    }
+
+    //如果执行器超时无返回，则启动KAFKA消费者，监控是否有任务日志
+    private boolean removeExecutorThreadByKafkaMsg(String executorPath,ChildData oldData) throws Exception{
+        boolean allDel = true;
+        for(int i=0;i<=maxPoolSize;i++){
+            List<String> taskProcessPath = zookeeperDriverClient.getChildren().forPath(ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH+executorPath+"/"+i);
+            log.info("executorInfo = [{}],taskProcessPath ====> [{}]",executorPath,taskProcessPath);
+            if(taskProcessPath!=null&&taskProcessPath.size()>0){
+                //如果没有KAFKA记录，则删除
+                if(DataxJobConstant.executorKafkaLogs.get(taskProcessPath)!=null){
+                    if(System.currentTimeMillis()-12*60*1000>=DataxJobConstant.executorKafkaLogs.get(taskProcessPath).getTimestamp() ){
+                        zookeeperDriverClient.delete().guaranteed().deletingChildrenIfNeeded().forPath(executorPath);
+                        String[] jobInfo = taskProcessPath.get(0).split(JOB_TASK_SPLIT_TAG);
+                        if(jobInfo.length>=2){
+                            distributeTask(jobInfo[0],jobInfo[1]);
+                        }
+                    }else{
+                        allDel=false;
+                    }
+                }else{
+                    //延时队列进行再次触发
+                    allDel = false;
+                    driverEventList.add(new ZookeeperEventDTO("managerExecutor",CuratorCacheListener.Type.NODE_DELETED,oldData,null,120*1000));
+                }
+
+            }
+        }
+        return allDel;
     }
 
     @Override
@@ -258,14 +310,15 @@ public class DataxDriverServiceImpl implements DataxDriverService {
                 }
             }
         }else{
-            splitJob(jobId);
+            splitJob(jobId,dataxDTO);
         }
         return dataxDTO;
     }
 
     @Override
-    public void splitJob(String jobId) {
+    public void splitJob(String jobId,DataxDTO jobDto) {
         //TODO 根据任务信息对任务进行拆解
+
     }
 
     @Override
@@ -287,7 +340,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         if(!STATUS_RUNNING.equals(ZookeeperConstant.driverStatus)){
             //调度器初始化未完成，则不进行相关工作调度
             //将初始化期间的事件信息塞入队列中
-            driverEventList.add(new ZookeeperEventDTO("manageJobExecutorChange",type,oldData,data));
+            driverEventList.add(new ZookeeperEventDTO("manageJobExecutorChange",type,oldData,data,3*1000));
 
             return ;
         }
@@ -306,6 +359,10 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     public void jobExecutorRemoveTask(ChildData oldData) {
         log.info(" executor finish task ,taskid = [{}]",oldData.getPath());
         String[] pathInfo = oldData.getPath().split("/");
+        if(pathInfo.length<=5){
+            log.debug("remove not task node ");
+            return;
+        }
         String jobInfo = pathInfo[pathInfo.length-1];
         String threadId = pathInfo[pathInfo.length-2];
         String executor = pathInfo[pathInfo.length-3];
@@ -361,4 +418,5 @@ public class DataxDriverServiceImpl implements DataxDriverService {
             zookeeperDriverClient.delete().guaranteed().deletingChildrenIfNeeded().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH+"/"+jobId);
         }
     }
+
 }
