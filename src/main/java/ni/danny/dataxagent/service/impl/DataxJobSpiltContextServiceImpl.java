@@ -7,6 +7,7 @@ import ni.danny.dataxagent.service.DataxJobSpiltStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -23,7 +24,7 @@ public class DataxJobSpiltContextServiceImpl implements DataxJobSpiltContextServ
     }
 
     @Override
-    public void splitDataxJob(String type,String jobId, DataxDTO dataxDTO) {
-        dataxJobSpiltStrategyMap.get(type).spiltDataxJob(jobId, dataxDTO);
+    public List<DataxDTO> splitDataxJob(String type, String jobId, DataxDTO dataxDTO) {
+       return dataxJobSpiltStrategyMap.get(type).spiltDataxJob(jobId, dataxDTO);
     }
 }

@@ -10,13 +10,15 @@ import lombok.ToString;
 public class DataxDTO {
     private Job job;
     private SplitStrategy splitStrategy;
+    private String jobId;
+    private String taskId;
 
     @Data
     @EqualsAndHashCode
     public class SplitStrategy{
         private String type;
+        private Object strategy;
     }
-
 
     @Data
     @EqualsAndHashCode

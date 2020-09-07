@@ -5,11 +5,13 @@ import ni.danny.dataxagent.dto.DataxDTO;
 import ni.danny.dataxagent.service.splitjob.HBaseReaderJobSpiltStrategyService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Service("hbaseReaderStrategy")
 public class HBaseReaderJobSpiltStrategyServiceImpl implements HBaseReaderJobSpiltStrategyService {
     @Override
-    public void spiltDataxJob(String jobId, DataxDTO dataxDTO) {
-
+    public List<DataxDTO> spiltDataxJob(String jobId, DataxDTO dataxDTO) {
+        return null;
     }
 }

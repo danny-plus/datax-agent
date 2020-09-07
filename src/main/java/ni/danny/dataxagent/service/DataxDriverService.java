@@ -29,20 +29,20 @@ public interface DataxDriverService {
      */
     DataxDTO checkJob(String jobId) throws Exception;
 
-    void splitJob(String jobId,DataxDTO jobDto);
+    void splitJob(String jobId,DataxDTO jobDto) throws Exception;
 
     /**
      * 将任务随机分配至执行器
      * @param jobId
      * @param taskId
      */
-    void distributeTask(String jobId,String taskId);
+    void distributeTask(String jobId,String taskId) throws Exception;
 
     /**
      * 给执行器分配具体任务
      * @param executorPath
      */
-    void distributeTask(String executorPath);
+    void distributeTask(String executorPath) throws Exception;
 
     /**
      * 调度器管理，任务执行器节点的变化

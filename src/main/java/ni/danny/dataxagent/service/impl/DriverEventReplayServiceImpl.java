@@ -37,6 +37,7 @@ public class DriverEventReplayServiceImpl implements DriverEventReplayService {
                         switch (zookeeperEventDTO.getMethod()){
                             case "manageJobExecutorChange": dataxDriverService.manageJobExecutorChange(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
                             case "managerExecutor": dataxDriverService.managerExecutor(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
+                            case "distributeTask": dataxDriverService.distributeTask(zookeeperEventDTO.getOldData().getPath(),zookeeperEventDTO.getData().getPath());
                             default:break;
                         }
                     }else{
