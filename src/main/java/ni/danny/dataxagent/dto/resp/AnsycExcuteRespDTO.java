@@ -14,6 +14,10 @@ public class AnsycExcuteRespDTO extends ResponseDTO {
     @Setter
     private String jobId;
 
+    @Getter
+    @Setter
+    private String traceId;
+
     public AnsycExcuteRespDTO(String code, String msg) {
         super(code, msg);
     }
@@ -23,9 +27,10 @@ public class AnsycExcuteRespDTO extends ResponseDTO {
         this.taskId = taskId;
     }
 
-    public AnsycExcuteRespDTO(ResponseDTO enumsDto,String taskId,String jobId){
+    public AnsycExcuteRespDTO(ResponseDTO enumsDto,String taskId,String jobId,String traceId){
         super(enumsDto);
         this.taskId = taskId;
         this.jobId = jobId;
+        this.traceId = traceId;
     }
 }

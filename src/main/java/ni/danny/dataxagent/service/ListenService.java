@@ -21,6 +21,11 @@ public interface ListenService {
     /**
      * 调度器监控任务执行器
      */
-    void dviverWatchJobExecutor();
+    void driverWatchJobExecutor();
+
+    /**
+     * 调度器监听KAFKA日志
+     */
+    void driverWatchKafkaMsg();
 
 }

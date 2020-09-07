@@ -2,10 +2,10 @@
 <Configuration status="INFO" monitorInterval = "30">
 <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-        <PatternLayout pattern = "jobId [%X{DATAX-JOBID}] - taskId=[%X{DATAX-TASKID}]-%d{HH:mm:ss.SSS} {%t} %-5level %logger{36} - %msg%n" />
+        <PatternLayout pattern = "jobId [%X{DATAX-JOBID}] - taskId=[%X{DATAX-TASKID}] - traceId = [%X{SOFA-TraceId}]-%d{HH:mm:ss.SSS} {%t} %-5level %logger{36} - %msg%n" />
     </Console>
-    <Kafka name="KafkaLog" topic="datax-log" ignoreExceptions="false">
-        <PatternLayout pattern="{'jobId':'%X{DATAX-JOBID}','taskId':'%X{DATAX-TASKID}','logTime':'%d{HH:mm:ss.SSS}','threadName':'%t','logLevel':'%-5level','logClass':'%logger{36}','msg':'%msg%n'}"/>
+    <Kafka name="KafkaLog" topic="datax-log" key="%X{DATAX-JOBID}" ignoreExceptions="false">
+        <PatternLayout pattern="%X{DATAX-JOBID}-%X{DATAX-TASKID}-%X{SOFA-TraceId}  {'jobId':'%X{DATAX-JOBID}','taskId':'%X{DATAX-TASKID}','traceId';'%X{SOFA-TraceId}','logTime':'%d{HH:mm:ss.SSS}','threadName':'%t','logLevel':'%-5level','logClass':'%logger{36}','msg':'%msg%n'}"/>
         <Property name="bootstrap.servers">192.168.8.2:9092</Property>
         <Property name="max.block.ms">2000</Property>
     </Kafka>

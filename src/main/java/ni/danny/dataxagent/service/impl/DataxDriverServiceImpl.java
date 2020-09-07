@@ -8,6 +8,7 @@ import ni.danny.dataxagent.constant.DataxJobConstant;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.dto.DataxDTO;
 import ni.danny.dataxagent.dto.ZookeeperEventDTO;
+import ni.danny.dataxagent.kafka.DataxLogConsumer;
 import ni.danny.dataxagent.service.DataxDriverService;
 import ni.danny.dataxagent.service.ListenService;
 import org.apache.curator.framework.CuratorFramework;
@@ -41,6 +42,8 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     @Autowired
     private Gson gson;
 
+    @Autowired
+    private DataxLogConsumer dataxLogConsumer;
 
 
     @Value("${datax.excutor.pool.maxPoolSize}")
@@ -55,6 +58,12 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         driverEventList.clear();
         //扫描获取所有JOB及其信息，在本地维护一个HASHMAP
         DataxJobConstant.dataxDTOS.clear();
+
+        //TODO: 扫描执行器,并伪造执行器事件
+
+
+
+
         try{
             List<String> jobPaths = zookeeperDriverClient.getChildren().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH);
             log.info("now jobs is ==>[{}]",jobPaths);
@@ -71,7 +80,6 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         }catch (Exception e){
             //TODO: 扫描失败
         }
-        //TODO: 扫描执行器
 
 
         if(STATUS_RUNNING.equals(ZookeeperConstant.updateDriverStatus(STATUS_INIT,STATUS_RUNNING))){
@@ -93,7 +101,8 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         try{
             zookeeperDriverClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.DRIVER_PATH, ("http://"+appInfoComp.getHostnameAndPort()).getBytes());
             listenService.driverWatchExecutor();
-            listenService.dviverWatchJobExecutor();
+            listenService.driverWatchJobExecutor();
+            listenService.driverWatchKafkaMsg();
             init();
         }catch (Exception ex){
             try{
@@ -104,14 +113,17 @@ public class DataxDriverServiceImpl implements DataxDriverService {
                     String info =  new String(zookeeperDriverClient.getData().forPath(ZookeeperConstant.DRIVER_PATH));
                     if(("http://"+appInfoComp.getHostnameAndPort()).equals(info)){
                         listenService.driverWatchExecutor();
-                        listenService.dviverWatchJobExecutor();
+                        listenService.driverWatchJobExecutor();
+                        listenService.driverWatchKafkaMsg();
                         init();
                     }else{
+                        stopListenKafka();
                         listenService.watchDriver();
                     }
                 }
 
             }catch (Exception ignore){}
+            stopListenKafka();
             listenService.watchDriver();
         }
     }
@@ -303,6 +315,11 @@ public class DataxDriverServiceImpl implements DataxDriverService {
                 checkAndRemoveJob(jobId);
             }
         }
+    }
+
+    @Override
+    public void stopListenKafka() {
+        dataxLogConsumer.stopListen();
     }
 
     private void checkAndRemoveJob(String jobId)throws Exception {

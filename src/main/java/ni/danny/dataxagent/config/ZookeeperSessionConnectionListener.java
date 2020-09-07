@@ -57,6 +57,7 @@ public class ZookeeperSessionConnectionListener{
             while(true){
                 try{
                   //  if(curatorFramework.getZookeeperClient().blockUntilConnectedOrTimedOut()){
+
                     if(zookeeperExecutorClient.blockUntilConnected(60,TimeUnit.MINUTES)){
                         log.info("ZK RECONNECTED");
                         dataxExecutorService.regist();

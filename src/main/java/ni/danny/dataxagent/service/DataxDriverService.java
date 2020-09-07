@@ -65,6 +65,11 @@ public interface DataxDriverService {
      */
     void removeJobWhenLastTask(String jobId,String taskId) throws Exception;
 
+    /**
+     * 未成功注册则暂停监听KAFKA
+     */
+    void stopListenKafka();
+
 
 
 }

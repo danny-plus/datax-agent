@@ -3,6 +3,7 @@ package ni.danny.dataxagent.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.config.AppInfoComp;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
+import ni.danny.dataxagent.kafka.DataxLogConsumer;
 import ni.danny.dataxagent.service.DataxDriverService;
 import ni.danny.dataxagent.service.DataxExecutorService;
 import ni.danny.dataxagent.service.ListenService;
@@ -34,6 +35,9 @@ public class ListenServiceImpl implements ListenService {
 
     @Autowired
     private AppInfoComp appInfoComp;
+
+    @Autowired
+    private DataxLogConsumer dataxLogConsumer;
 
     @Override
     public void watchDriver() {
@@ -107,7 +111,7 @@ public class ListenServiceImpl implements ListenService {
     }
 
     @Override
-    public void dviverWatchJobExecutor() {
+    public void driverWatchJobExecutor() {
         CuratorCache pathChildrenCache =CuratorCache.builder(zookeeperExecutorClient, ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH).build();
         try{
             pathChildrenCache.start();
@@ -122,5 +126,10 @@ public class ListenServiceImpl implements ListenService {
             exception.printStackTrace();
         }
 
+    }
+
+    @Override
+    public void driverWatchKafkaMsg() {
+        dataxLogConsumer.startListen();
     }
 }

@@ -7,6 +7,7 @@ import ni.danny.dataxagent.service.DataxExecutorService;
 import ni.danny.dataxagent.service.ListenService;
 import ni.danny.dataxagent.service.StartService;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,17 +50,24 @@ public class StartServiceImpl implements StartService {
 
     @Override
     public void registerDriver() {
+
         zookeeperDriverClient.start();
-        zookeeperDriverClient.getConnectionStateListenable().addListener(driverSessionConnectionListener);
-        log.info("zookeeper driver client start");
-        dataxDriverService.regist();
+        CuratorFrameworkState state = zookeeperDriverClient.getState();
+        if(CuratorFrameworkState.STARTED.equals(state)){
+            zookeeperDriverClient.getConnectionStateListenable().addListener(driverSessionConnectionListener);
+            log.info("zookeeper driver client start");
+            dataxDriverService.regist();
+        }
     }
 
     @Override
     public void registerExecutor() {
         zookeeperExecutorClient.start();
-        zookeeperExecutorClient.getConnectionStateListenable().addListener(executorSessionConnectionListener);
-        log.info("zookeeper executor client start");
-        dataxExecutorService.regist();
+        CuratorFrameworkState state = zookeeperExecutorClient.getState();
+        if(CuratorFrameworkState.STARTED.equals(state)) {
+            zookeeperExecutorClient.getConnectionStateListenable().addListener(executorSessionConnectionListener);
+            log.info("zookeeper executor client start");
+            dataxExecutorService.regist();
+        }
     }
 }
