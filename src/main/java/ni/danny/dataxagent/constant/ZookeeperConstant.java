@@ -3,6 +3,7 @@ package ni.danny.dataxagent.constant;
 import ni.danny.dataxagent.dto.ZookeeperEventDTO;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ZookeeperConstant {
     public final static String NAME_SPACE = "datax-agent";
@@ -19,6 +20,8 @@ public class ZookeeperConstant {
     public final static ConcurrentLinkedQueue<ZookeeperEventDTO> driverEventList = new ConcurrentLinkedQueue<>();
 
     public final static ConcurrentLinkedQueue<ZookeeperEventDTO> executorEventList = new ConcurrentLinkedQueue<>();
+
+    public final static ConcurrentSkipListSet<String> onlineExecutorSet = new ConcurrentSkipListSet<>();
 
     public static String driverStatus = "INIT";
 

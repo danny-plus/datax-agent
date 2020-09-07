@@ -68,7 +68,7 @@ public interface DataxDriverService {
     /**
      * 未成功注册则暂停监听KAFKA
      */
-    void stopListenKafka();
+    void stopListenKafka(int num);
 
 
 

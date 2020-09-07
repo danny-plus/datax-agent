@@ -56,14 +56,36 @@ public class DataxDriverServiceImpl implements DataxDriverService {
             return ;
         }
         driverEventList.clear();
-        //扫描获取所有JOB及其信息，在本地维护一个HASHMAP
+
         DataxJobConstant.dataxDTOS.clear();
+        ZookeeperConstant.onlineExecutorSet.clear();
+        try{
+            //扫描所有的执行器，在本地维护一个完整的执行器在线表，如果在线，则放入一个上线事件
+            List<String> executorPaths = zookeeperDriverClient.getChildren().forPath(EXECUTOR_ROOT_PATH);
+            if(executorPaths!=null&&executorPaths.size()>0){
+                for(String path:executorPaths){
+                    String onlineExecutorPath = path.replace(EXECUTOR_ROOT_PATH,"");
+                    onlineExecutorSet.add(onlineExecutorPath);
+                    driverEventList.add(new ZookeeperEventDTO("managerExecutor",CuratorCacheListener.Type.NODE_CREATED,null,new ChildData(path,new Stat(),"".getBytes())));
+                }
+            }
+            //扫描所有的任务执行器，如果在线执行器SET中没有，则放入一个下线事件
+            List<String> jobExecutorPaths = zookeeperDriverClient.getChildren().forPath(JOB_EXECUTOR_ROOT_PATH);
+            if(jobExecutorPaths!=null&&jobExecutorPaths.size()>0){
+                for(String path:jobExecutorPaths){
+                    String jobExecutorPath = path.replace(JOB_EXECUTOR_ROOT_PATH,"");
+                    log.info("jobExecutorPath==[{}]",jobExecutorPath);
+                    if(!onlineExecutorSet.contains(jobExecutorPath)){
+                        driverEventList.add(new ZookeeperEventDTO("managerExecutor",CuratorCacheListener.Type.NODE_DELETED,null,new ChildData(path,new Stat(),"".getBytes())));
+                    }
+                }
+            }
 
-        //TODO: 扫描执行器,并伪造执行器事件
+        }catch (Exception ex){
+            //TODO:扫描失败
 
-
-
-
+        }
+        //扫描获取所有JOB及其信息，在本地维护一个HASHMAP
         try{
             List<String> jobPaths = zookeeperDriverClient.getChildren().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH);
             log.info("now jobs is ==>[{}]",jobPaths);
@@ -83,6 +105,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
 
         if(STATUS_RUNNING.equals(ZookeeperConstant.updateDriverStatus(STATUS_INIT,STATUS_RUNNING))){
+            listenService.driverWatchKafkaMsg();
             //重放任务
             log.info("driver init finish, start to replay the change, size=[{}]",driverEventList.size());
            ZookeeperEventDTO zookeeperEventDTO = driverEventList.poll();
@@ -99,10 +122,10 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     @Override
     public void regist() {
         try{
+            DataxJobConstant.excutorKafkaLogs.clear();
             zookeeperDriverClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.DRIVER_PATH, ("http://"+appInfoComp.getHostnameAndPort()).getBytes());
             listenService.driverWatchExecutor();
             listenService.driverWatchJobExecutor();
-            listenService.driverWatchKafkaMsg();
             init();
         }catch (Exception ex){
             try{
@@ -114,16 +137,15 @@ public class DataxDriverServiceImpl implements DataxDriverService {
                     if(("http://"+appInfoComp.getHostnameAndPort()).equals(info)){
                         listenService.driverWatchExecutor();
                         listenService.driverWatchJobExecutor();
-                        listenService.driverWatchKafkaMsg();
                         init();
                     }else{
-                        stopListenKafka();
+                        stopListenKafka(0);
                         listenService.watchDriver();
                     }
                 }
 
             }catch (Exception ignore){}
-            stopListenKafka();
+            stopListenKafka(0);
             listenService.watchDriver();
         }
     }
@@ -318,8 +340,18 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     }
 
     @Override
-    public void stopListenKafka() {
-        dataxLogConsumer.stopListen();
+    public void stopListenKafka(int num) {
+        try{
+            String data = new String( zookeeperDriverClient.getData().forPath(DRIVER_PATH));
+            if(!("http://"+appInfoComp.getHostnameAndPort()).equals(data)){
+                dataxLogConsumer.stopListen();
+            }
+        }catch (Exception ex){
+            if(num<=5){
+                int tmpNum = num;
+                stopListenKafka(tmpNum);
+            }
+        }
     }
 
     private void checkAndRemoveJob(String jobId)throws Exception {
