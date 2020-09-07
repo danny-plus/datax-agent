@@ -9,6 +9,14 @@ import lombok.ToString;
 @ToString
 public class DataxDTO {
     private Job job;
+    private SplitStrategy splitStrategy;
+
+    @Data
+    @EqualsAndHashCode
+    public class SplitStrategy{
+        private String type;
+    }
+
 
     @Data
     @EqualsAndHashCode

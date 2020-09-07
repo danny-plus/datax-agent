@@ -11,6 +11,7 @@ import ni.danny.dataxagent.dto.DataxDTO;
 import ni.danny.dataxagent.dto.ZookeeperEventDTO;
 import ni.danny.dataxagent.kafka.DataxLogConsumer;
 import ni.danny.dataxagent.service.DataxDriverService;
+import ni.danny.dataxagent.service.DataxJobSpiltContextService;
 import ni.danny.dataxagent.service.DriverEventReplayService;
 import ni.danny.dataxagent.service.ListenService;
 import org.apache.curator.framework.CuratorFramework;
@@ -53,6 +54,9 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private DataxJobSpiltContextService dataxJobSpiltContextService;
 
 
     @Value("${datax.excutor.pool.maxPoolSize}")
@@ -317,14 +321,12 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Override
     public void splitJob(String jobId,DataxDTO jobDto) {
-        //TODO 根据任务信息对任务进行拆解
-
+        dataxJobSpiltContextService.splitDataxJob(jobDto.getSplitStrategy().getType(),jobId,jobDto);
     }
 
     @Override
     public void distributeTask(String jobId, String taskId) {
         //TODO 分配任务，至到没有空余的执行器线程
-
 
     }
 
