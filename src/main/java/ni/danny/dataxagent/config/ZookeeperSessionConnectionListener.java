@@ -1,6 +1,7 @@
 package ni.danny.dataxagent.config;
 
 import lombok.extern.slf4j.Slf4j;
+import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.service.DataxDriverService;
 import ni.danny.dataxagent.service.DataxExecutorService;
 import org.apache.curator.framework.CuratorFramework;
@@ -34,6 +35,7 @@ public class ZookeeperSessionConnectionListener{
     @Bean
     public ConnectionStateListener driverSessionConnectionListener(){
         return (curatorFramework, connectionState) -> {
+            ZookeeperConstant.updateDriverName(null,"");
             while(true){
                 try{
                     if(zookeeperDriverClient.blockUntilConnected(60, TimeUnit.MINUTES)){

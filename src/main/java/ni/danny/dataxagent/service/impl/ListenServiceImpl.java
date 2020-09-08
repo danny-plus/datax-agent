@@ -33,6 +33,7 @@ public class ListenServiceImpl implements ListenService {
     @Autowired
     private DataxDriverService dataxDriverService;
 
+
     @Autowired
     private AppInfoComp appInfoComp;
 
@@ -56,7 +57,7 @@ public class ListenServiceImpl implements ListenService {
                     }catch (InterruptedException ignore){
 
                     }
-                    dataxDriverService.regist();
+                     dataxDriverService.regist();
                 }
             });
         }catch (Exception exception){
@@ -74,13 +75,26 @@ public class ListenServiceImpl implements ListenService {
         pathChildrenCache.start();
         pathChildrenCache.listenable().addListener(
                 (type, oldData, data) -> {
-                    log.info("driver watch catch executor child change===>"+type+"   "+oldData+"   "+data);
-                    dataxDriverService.managerExecutor(type,oldData,data);
+                    dataxDriverService.dispatchExecutorEvent(type,oldData,data);
                 }
         );
     }catch (Exception exception){
         exception.printStackTrace();
     }
+    }
+
+    @Override
+    public void driverWatchJobExecutor() {
+        CuratorCache pathChildrenCache =CuratorCache.builder(zookeeperExecutorClient, ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH).build();
+        try{
+            pathChildrenCache.start();
+            pathChildrenCache.listenable().addListener((type, oldData, data) -> {
+                dataxDriverService.dispatchJobExecutorEvent(type,oldData,data);
+            });
+        }catch (Exception exception){
+            exception.printStackTrace();
+        }
+
     }
 
     /**
@@ -101,20 +115,6 @@ public class ListenServiceImpl implements ListenService {
         }
     }
 
-    @Override
-    public void driverWatchJobExecutor() {
-        CuratorCache pathChildrenCache =CuratorCache.builder(zookeeperExecutorClient, ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH).build();
-        try{
-            pathChildrenCache.start();
-            pathChildrenCache.listenable().addListener((type, oldData, data) -> {
-                log.info("driver watch job executor child change===>"+type+"   "+oldData+"   "+data);
-                dataxDriverService.manageJobExecutorChange(type, oldData, data);
-            });
-        }catch (Exception exception){
-            exception.printStackTrace();
-        }
-
-    }
 
     @Override
     public void driverWatchKafkaMsg() {

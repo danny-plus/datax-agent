@@ -6,15 +6,10 @@ import ni.danny.dataxagent.service.*;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.state.ConnectionStateListener;
-import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.stereotype.Service;
-
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 @Slf4j
 @Service
@@ -55,24 +50,53 @@ public class StartServiceImpl implements StartService {
     public void registerDriver() {
 
         zookeeperDriverClient.start();
-        CuratorFrameworkState state = zookeeperDriverClient.getState();
-        if(CuratorFrameworkState.STARTED.equals(state)){
-            zookeeperDriverClient.getConnectionStateListenable().addListener(driverSessionConnectionListener);
-            log.info("zookeeper driver client start");
-            driverEventReplayService.replay();
-            dataxDriverService.regist();
+        try{
+            Stat stat = zookeeperDriverClient.checkExists().forPath(ZookeeperConstant.DRIVER_PATH);
+        }catch (Exception ex){
+            try{ Thread.sleep(1*1000);
+                registerDriver();
+            }catch (Exception ignore){}
         }
+        for(;;){
+            CuratorFrameworkState state = zookeeperDriverClient.getState();
+            if(CuratorFrameworkState.STARTED.equals(state)){
+                break;
+            }
+            try{
+                Thread.sleep(300);
+                registerExecutor();
+            }catch (Exception ignore){}
+        }
+        zookeeperDriverClient.getConnectionStateListenable().addListener(driverSessionConnectionListener);
+        log.info("zookeeper driver client start");
+        driverEventReplayService.replay();
+        dataxDriverService.regist();
     }
 
     @Override
     public void registerExecutor() {
         zookeeperExecutorClient.start();
-        CuratorFrameworkState state = zookeeperExecutorClient.getState();
-        if(CuratorFrameworkState.STARTED.equals(state)) {
-            zookeeperExecutorClient.getConnectionStateListenable().addListener(executorSessionConnectionListener);
-            log.info("zookeeper executor client start");
-            executorEventReplayService.replay();
-            dataxExecutorService.regist();
+        try{
+            Stat stat = zookeeperExecutorClient.checkExists().forPath(ZookeeperConstant.DRIVER_PATH);
+        }catch (Exception ex){
+            try{ Thread.sleep(1*1000);
+                registerExecutor();
+            }catch (Exception ignore){}
         }
+        for(;;){
+            CuratorFrameworkState state = zookeeperExecutorClient.getState();
+            if(CuratorFrameworkState.STARTED.equals(state)) {
+                break;
+            }
+            try{
+                Thread.sleep(300);
+                registerExecutor();
+            }catch (Exception ignore){}
+        }
+        zookeeperExecutorClient.getConnectionStateListenable().addListener(executorSessionConnectionListener);
+        log.info("zookeeper executor client start");
+        executorEventReplayService.replay();
+        dataxExecutorService.regist();
+
     }
 }

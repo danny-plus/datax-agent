@@ -20,9 +20,6 @@ public class DriverEventReplayServiceImpl implements DriverEventReplayService {
     @Autowired
     private AppInfoComp appInfoComp;
 
-    @Autowired
-    private DataxDriverService dataxDriverService;
-
     @Override
     @Async("driverReplayThreadExecutor")
     public void replay() {
@@ -35,9 +32,8 @@ public class DriverEventReplayServiceImpl implements DriverEventReplayService {
                         log.info("driver init finish, start to replay the change, size=[{}]",driverEventList.size());
 
                         switch (zookeeperEventDTO.getMethod()){
-                            case "manageJobExecutorChange": dataxDriverService.manageJobExecutorChange(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
-                            case "managerExecutor": dataxDriverService.managerExecutor(zookeeperEventDTO.getType(),zookeeperEventDTO.getOldData(),zookeeperEventDTO.getData());break;
-                            case "distributeTask": dataxDriverService.distributeTask(zookeeperEventDTO.getOldData().getPath(),zookeeperEventDTO.getData().getPath());
+
+
                             default:break;
                         }
                     }else{

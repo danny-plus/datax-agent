@@ -40,6 +40,8 @@ public class ZookeeperConstant {
 
     public static String STATUS_RUNNING = "RUNNING";
 
+    public static String STATUS_WATCH = "WATCH";
+
     public static synchronized String updateDriverStatus(String oldStatus,String newStatus){
         if(oldStatus==null||oldStatus.equals(driverStatus)){
             driverStatus = newStatus;
