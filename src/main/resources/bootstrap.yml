@@ -11,33 +11,33 @@ management:
 logging:
   config: classpath:log4j2.xml
   #http://${spring.cloud.nacos.config.server-addr}/nacos/v1/cs/configs?dataId=log4j2.xml&group=DEFAULT_GROUP&tenant=public
----
-spring:
-  profiles: dev
-  cloud:
-    nacos:
-      config:
-        server-addr: 192.168.8.2:8848
-        file-extension: yml
-      discovery:
-        server-addr: 192.168.8.2:8848
----
-spring:
-  profiles: home
-  cloud:
-    nacos:
-      config:
-        server-addr: 192.168.8.2:8848
-        file-extension: yml
-      discovery:
-        server-addr: 192.168.8.2:8848
----
-spring:
-  profiles: sit
-  cloud:
-    nacos:
-      config:
-        server-addr: 10.131.170.242:8082
-        file-extension: yml
-      discovery:
-        server-addr: 10.131.170.242:8082
+#---
+#spring:
+#  profiles: dev
+#  cloud:
+#    nacos:
+#      config:
+#        server-addr: 192.168.8.2:8848
+#        file-extension: yml
+#      discovery:
+#        server-addr: 192.168.8.2:8848
+#---
+#spring:
+#  profiles: home
+#  cloud:
+#    nacos:
+#      config:
+#        server-addr: 192.168.8.2:8848
+#        file-extension: yml
+#      discovery:
+#        server-addr: 192.168.8.2:8848
+#---
+#spring:
+#  profiles: sit
+#  cloud:
+#    nacos:
+#      config:
+#        server-addr: 10.131.170.242:8082
+#        file-extension: yml
+#      discovery:
+#        server-addr: 10.131.170.242:8082

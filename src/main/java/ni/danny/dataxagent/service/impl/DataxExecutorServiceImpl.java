@@ -1,8 +1,12 @@
 package ni.danny.dataxagent.service.impl;
 
 
+import com.alipay.common.tracer.core.context.trace.SofaTraceContext;
+import com.alipay.common.tracer.core.holder.SofaTraceContextHolder;
+import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.alipay.sofa.boot.util.StringUtils;
 import com.alipay.sofa.common.utils.StringUtil;
+import com.alipay.sofa.tracer.plugins.springmvc.SpringMvcTracer;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.callback.ExecutorDataxJobCallback;
 import ni.danny.dataxagent.config.AppInfoComp;
@@ -17,6 +21,7 @@ import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -76,7 +81,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
         switch (type.toString()){
             case "NODE_CREATED":
-                if(data.getPath().split("/").length>=5){
+                if(data.getPath().split("/").length>=6){
                     createTask(data);
                 }
             break;
@@ -88,6 +93,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
     @Override
     public void createTask(ChildData data) {
         //TODO 小心重放
+        SpringMvcTracer.getSpringMvcTracerSingleton().serverReceive(null);
         log.info("new dispatch job arrive ");
         try{
             if(0<DataxJobConstant.executorThreadNum.incrementAndGet()&&DataxJobConstant.executorThreadNum.incrementAndGet()<=maxPoolSize){
@@ -106,7 +112,16 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
                 if(!StringUtil.isNumeric(taskId)){
                     throw new Exception("error taskid");
                 }
-                //TODO 检查任务是否属于自己：看任务下挂线程，看自己线程下挂任务是否一致
+
+                SofaTraceContext sofaTraceContext = SofaTraceContextHolder.getSofaTraceContext();
+                SofaTracerSpan sofaTracerSpan = sofaTraceContext.getCurrentSpan();
+                sofaTracerSpan.setBaggageItem("DATAX-JOBID",jobId);
+                sofaTracerSpan.setBaggageItem("DATAX-TASKID",taskId+"");
+                MDC.remove("DATAX-JOBID");
+                MDC.remove("DATAX-TASKID");
+                MDC.put("DATAX-JOBID",jobId);
+                MDC.put("DATAX-TASKID",taskId+"");
+
                 String taskPath = JOB_LIST_ROOT_PATH+"/"+jobId+"/"+taskId;
                 Stat stat = zookeeperExecutorClient.checkExists().forPath(taskPath+"/"+executor+"/"+threadId);
 
@@ -116,6 +131,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
                     DataxJobConstant.executorThreadNum.decrementAndGet();
                     return ;
                 }
+
                 //取任务信息，并在本地生成任务文件
                 String dataxJson = new String( zookeeperExecutorClient.getData().forPath(JOB_LIST_ROOT_PATH+"/"+jobId+"/"+taskId));
 
