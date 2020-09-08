@@ -18,6 +18,7 @@ datax:
     pool:
       corePoolSize: 2
       maxPoolSize: 3
+  maxCheckTimes: 5
   zookeeper:
     addressAndPort: 192.168.8.2:22181
 

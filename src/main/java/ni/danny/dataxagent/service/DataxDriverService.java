@@ -28,12 +28,17 @@ public interface DataxDriverService {
     /**
      * 执行器巡检
      */
-    void scanExecutor();
+    void scanExecutor() throws Exception;
 
     /**
      * 任务巡检
      */
-    void scanJob();
+    void scanJob() throws Exception;
+
+    /**
+     * 检查下线执行器的任务执行情况
+     */
+    boolean checkOfflineExecutorThreadTask(DataxExecutorTaskDTO dto) throws Exception;
 
     /**
      * 新任务创建

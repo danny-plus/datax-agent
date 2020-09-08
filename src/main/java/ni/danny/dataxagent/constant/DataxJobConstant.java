@@ -21,5 +21,7 @@ public class DataxJobConstant {
 
     public final static String EXECUTOR_HEALTH_CHECK_URL = "/actuator/health";
 
+    public final static String HEALTH_UP = "UP";
+
     public static AtomicInteger executorThreadNum = new AtomicInteger(0);
 }

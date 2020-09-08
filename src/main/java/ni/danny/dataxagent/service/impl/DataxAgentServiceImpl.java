@@ -12,6 +12,7 @@ import ni.danny.dataxagent.callback.ExecutorDataxJobCallback;
 import ni.danny.dataxagent.constant.DataxJobConstant;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.dto.DataxDTO;
+import ni.danny.dataxagent.enums.ExecutorTaskStatusEnum;
 import ni.danny.dataxagent.enums.exception.DataxAgentExceptionCodeEnum;
 import ni.danny.dataxagent.exception.DataxAgentCreateJobJsonException;
 import ni.danny.dataxagent.exception.DataxAgentException;
@@ -79,6 +80,8 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.remove("DATAX-TASKID");
         MDC.put("DATAX-JOBID",jobId);
         MDC.put("DATAX-TASKID",taskId+"");
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.START.getValue());
         log.info("job [{}-{}] executor ----start----",jobId,taskId);
 
         System.setProperty("datax.home",dataxHome);
@@ -87,6 +90,10 @@ public class DataxAgentServiceImpl implements DataxAgentService {
                 ,"-jobid",taskId+""};
 
         Engine.entry(dataxArgs);
+
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.FINISH.getValue());
+        log.info("job finished");
 
         callback.finishTask();
     }

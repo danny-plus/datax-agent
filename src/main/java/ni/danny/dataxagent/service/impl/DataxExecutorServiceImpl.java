@@ -57,7 +57,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
     @Override
     public void regist()  {
         try{
-            zookeeperExecutorClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.EXECUTOR_ROOT_PATH+"/"+appInfoComp.getIpAndPort(), ("http://"+appInfoComp.getHostnameAndPort()).getBytes());
+            zookeeperExecutorClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+appInfoComp.getIpAndPort(), (HTTP_PROTOCOL_TAG+appInfoComp.getIpAndPort()).getBytes());
             listen();
             init();
         }catch (Exception ex){
@@ -89,8 +89,14 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
         SofaTraceContext sofaTraceContext = SofaTraceContextHolder.getSofaTraceContext();
         SofaTracerSpan sofaTracerSpan = sofaTraceContext.getCurrentSpan();
         dto.setTraceId(sofaTracerSpan.getSofaTracerSpanContext().getTraceId());
+        MDC.remove("DATAX-STATUS");
+        MDC.remove("DATAX-JOBID");
+        MDC.remove("DATAX-TASKID");
+        MDC.put("DATAX-JOBID",dto.getJobId());
+        MDC.put("DATAX-TASKID",dto.getTaskId());
+        MDC.put("DATAX-STATUS",ExecutorTaskStatusEnum.INIT.getValue());
         try{
-            zookeeperExecutorClient.setData().forPath(JOB_EXECUTOR_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()+"/"+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId(),dto.getTraceId().getBytes());
+            zookeeperExecutorClient.setData().forPath(JOB_EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId(),dto.getTraceId().getBytes());
         }catch (Exception ex){
             rejectTask(dto);
         }
@@ -100,15 +106,17 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
             sofaTracerSpan.setBaggageItem("DATAX-JOBID",dto.getJobId());
             sofaTracerSpan.setBaggageItem("DATAX-TASKID",dto.getTaskId());
+            MDC.remove("DATAX-STATUS");
             MDC.remove("DATAX-JOBID");
             MDC.remove("DATAX-TASKID");
             MDC.put("DATAX-JOBID",dto.getJobId());
             MDC.put("DATAX-TASKID",dto.getTaskId());
+            MDC.put("DATAX-STATUS",ExecutorTaskStatusEnum.START.getValue());
             try{
-            String dataxJson = new String(zookeeperExecutorClient.getData().forPath(JOB_LIST_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()));
+            String dataxJson = new String(zookeeperExecutorClient.getData().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()));
             String jobJsonPath = dataxAgentService.createDataxJobJsonFile(dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId(),dataxJson);
             zookeeperExecutorClient.setData().forPath(
-                    JOB_LIST_ROOT_PATH+"/"+dto.getJobId()+"/"+ dto.getTaskId()+"/"+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread()
+                    JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+ dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread()
                     ,ExecutorTaskStatusEnum.RUNNING.getValue().getBytes());
             DataxExecutorService dataxExecutorService = this;
             dataxAgentService.asyncExecuteDataxJob(dto.getJobId(),Integer.parseInt(dto.getTaskId()),jobJsonPath
@@ -129,12 +137,14 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
         log.info("[{}] finish , recycle start ",dto);
         try{
             // 重放时不一致问题
-            Stat stat = zookeeperExecutorClient.checkExists().forPath(JOB_EXECUTOR_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()+"/"+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId());
+            Stat stat = zookeeperExecutorClient.checkExists().forPath(JOB_EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId());
             if(stat != null){
-                String tmpTraceId = new String(zookeeperExecutorClient.getData().forPath(JOB_EXECUTOR_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()+"/"+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId()));
+                String tmpTraceId = new String(zookeeperExecutorClient.getData().forPath(JOB_EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId()));
                 if(tmpTraceId.equals(dto.getTraceId())){
-                zookeeperExecutorClient.setData().forPath(JOB_LIST_ROOT_PATH+"/"+dto.getJobId()+"/"+ dto.getTaskId()+"/"+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread(),ExecutorTaskStatusEnum.FINISH.getValue().getBytes());
-                zookeeperExecutorClient.delete().guaranteed().forPath(JOB_EXECUTOR_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()+"/"+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId());
+                    MDC.remove("DATAX-STATUS");
+                    MDC.put("DATAX-STATUS",ExecutorTaskStatusEnum.FINISH.getValue());
+                    zookeeperExecutorClient.setData().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+ dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread(),ExecutorTaskStatusEnum.FINISH.getValue().getBytes());
+                    zookeeperExecutorClient.delete().guaranteed().forPath(JOB_EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId());
                 }else{
                     log.error("not match traceId, nodeData traceId = [{}], dto = [{}]",tmpTraceId,dto);
                 }
@@ -143,7 +153,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
         }catch (Exception ex){
             log.info("[{}] finish, recycle error ",dto);
             executorEventList.add(new ZookeeperEventDTO("finishTask", CuratorCacheListener.Type.NODE_DELETED,
-                    new ChildData(JOB_EXECUTOR_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()+"/"+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId(),null,gson.toJson(dto).getBytes()),null,3*1000));
+                    new ChildData(JOB_EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId(),null,gson.toJson(dto).getBytes()),null,3*1000));
         }
     }
 
@@ -152,21 +162,23 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
         log.info("[{}] reject , recycle start ",dto);
         try{
             // 重放时不一致问题
-            Stat stat = zookeeperExecutorClient.checkExists().forPath(JOB_EXECUTOR_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()+"/"+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId());
+            Stat stat = zookeeperExecutorClient.checkExists().forPath(JOB_EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId());
             if(stat != null){
-                String tmpTraceId = new String(zookeeperExecutorClient.getData().forPath(JOB_EXECUTOR_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()+"/"+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId()));
+                String tmpTraceId = new String(zookeeperExecutorClient.getData().forPath(JOB_EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId()));
                 if(tmpTraceId==null||tmpTraceId.isEmpty()||tmpTraceId.equals(dto.getTraceId())){
-                zookeeperExecutorClient.setData().forPath(JOB_LIST_ROOT_PATH+"/"+dto.getJobId()+"/"+ dto.getTaskId()+"/"+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread(),ExecutorTaskStatusEnum.REJECT.getValue().getBytes());
-                zookeeperExecutorClient.delete().guaranteed().forPath(JOB_EXECUTOR_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()+"/"+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId());
-            }else{
-                log.error("not match traceId, nodeData traceId = [{}], dto = [{}]",tmpTraceId,dto);
-                }
+                    MDC.remove("DATAX-STATUS");
+                    MDC.put("DATAX-STATUS",ExecutorTaskStatusEnum.REJECT.getValue());
+                    zookeeperExecutorClient.setData().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+ dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread(),ExecutorTaskStatusEnum.REJECT.getValue().getBytes());
+                    zookeeperExecutorClient.delete().guaranteed().forPath(JOB_EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId());
+                }else{
+                    log.error("not match traceId, nodeData traceId = [{}], dto = [{}]",tmpTraceId,dto);
+                    }
             }
         log.info("[{}] reject, recycle end ",dto);
         }catch (Exception ex){
             log.info("[{}] reject, recycle error ",dto);
             executorEventList.add(new ZookeeperEventDTO("rejectTask", CuratorCacheListener.Type.NODE_DELETED,
-                    new ChildData(JOB_EXECUTOR_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()+"/"+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId(),null,gson.toJson(dto).getBytes()),null,3*1000));
+                    new ChildData(JOB_EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+JOB_TASK_SPLIT_TAG+dto.getTaskId(),null,gson.toJson(dto).getBytes()),null,3*1000));
 
         }
     }
@@ -234,14 +246,14 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
         }
         //看任务状态
         String jobStatus = new String(zookeeperExecutorClient.getData()
-                .forPath(JOB_LIST_ROOT_PATH+"/"+dataxExecutorTaskDTO.getJobId()+"/"+dataxExecutorTaskDTO.getTaskId()+"/"+dataxExecutorTaskDTO.getExecutor()+JOB_TASK_SPLIT_TAG+dataxExecutorTaskDTO.getThread()));
+                .forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dataxExecutorTaskDTO.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dataxExecutorTaskDTO.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dataxExecutorTaskDTO.getExecutor()+JOB_TASK_SPLIT_TAG+dataxExecutorTaskDTO.getThread()));
 
         return ExecutorTaskStatusEnum.getTaskStatusByValue(jobStatus);
     }
 
     private boolean checkTaskIsSelf(DataxExecutorTaskDTO dto) throws Exception {
         boolean result = true;
-        Stat taskExecutorStat = zookeeperExecutorClient.checkExists().forPath(JOB_LIST_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId()+"/"+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread());
+        Stat taskExecutorStat = zookeeperExecutorClient.checkExists().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread());
         if(taskExecutorStat == null){
             result = false;
         }
@@ -250,7 +262,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
     private boolean checkTaskExist(DataxExecutorTaskDTO dto) throws Exception {
         boolean result = true;
-        Stat taskStat = zookeeperExecutorClient.checkExists().forPath(JOB_LIST_ROOT_PATH+"/"+dto.getJobId()+"/"+dto.getTaskId());
+        Stat taskStat = zookeeperExecutorClient.checkExists().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getTaskId());
         if(taskStat==null){
          result = false;
         }
@@ -269,8 +281,8 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
     private boolean checkData(ChildData data){
         boolean result = false;
-        if(data.getPath().split("/").length==6){
-            if(data.getPath().split("/")[5].split(JOB_TASK_SPLIT_TAG).length==2){
+        if(data.getPath().split(ZOOKEEPER_PATH_SPLIT_TAG).length==6){
+            if(data.getPath().split(ZOOKEEPER_PATH_SPLIT_TAG)[5].split(JOB_TASK_SPLIT_TAG).length==2){
                 result = true;
             }
         }
@@ -281,7 +293,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
         String path = childData.getPath();
         String nodeData = new String(childData.getData());
         DataxExecutorTaskDTO dataxExecutorTaskDTO = new DataxExecutorTaskDTO();
-        String[] pathInfo = path.split("/");
+        String[] pathInfo = path.split(ZOOKEEPER_PATH_SPLIT_TAG);
         //data-agent/job/executor/executorIp:port/threadId/jobId-taskId
 
         dataxExecutorTaskDTO.setExecutor(pathInfo[3]);

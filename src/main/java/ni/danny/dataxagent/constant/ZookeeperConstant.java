@@ -18,6 +18,10 @@ public class ZookeeperConstant {
 
     public final static String JOB_TASK_SPLIT_TAG = "-";
 
+    public final static String ZOOKEEPER_PATH_SPLIT_TAG = "/";
+
+    public final static String HTTP_PROTOCOL_TAG = "http://";
+
     public static String driverName = null ;
 
     public final static DelayQueue<ZookeeperEventDTO> driverEventList = new DelayQueue<>();

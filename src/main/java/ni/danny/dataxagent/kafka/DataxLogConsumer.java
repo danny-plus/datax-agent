@@ -5,6 +5,7 @@ import ni.danny.dataxagent.constant.DataxJobConstant;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 
 import ni.danny.dataxagent.dto.DataxLogDTO;
+import ni.danny.dataxagent.enums.ExecutorTaskStatusEnum;
 import org.apache.kafka.common.record.Record;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,8 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
 
 @Slf4j
 @Component
@@ -37,22 +40,28 @@ public class DataxLogConsumer {
 
     @KafkaListener(id="datax-agent-driver",topics = {"datax-log"},containerFactory = "delayContainerFactory" )
     public void listen(Record record){
-         //取jobId{30}-taskId{6}-traceId{30}
-        String data = record.value().toString();
+         //取jobId-taskId-traceId-status|||
+        String data = record.value().toString().trim();
         Long timestamp = record.timestamp();
-
-        String jobInfoStr = data.substring(0,30+6+30);
+        String jobInfoStr = data.substring(0,data.indexOf("|||"));
         String[] jobInfo = jobInfoStr.split(ZookeeperConstant.JOB_TASK_SPLIT_TAG);
-        if(jobInfo.length==3){
+        if(jobInfo.length == 4){
             String jobId = jobInfo[0];
             String taskId = jobInfo[1];
             String traceId = jobInfo[2];
+            String nowStatus = jobInfo[3];
+
             String jobKey = jobId+ZookeeperConstant.JOB_TASK_SPLIT_TAG+taskId;
             if(DataxJobConstant.executorKafkaLogs.get(jobKey)!=null){
                 DataxLogDTO dto = DataxJobConstant.executorKafkaLogs.get(jobKey);
                 if(timestamp>=dto.getTimestamp()){
-                    dto.setTimestamp(timestamp);
-                    dto.setTraceId(traceId);
+                    if(Arrays.asList(dto.getStatus().getCanNext()).contains(nowStatus)){
+                        DataxJobConstant.executorKafkaLogs.remove(dto);
+                        dto.setTimestamp(timestamp);
+                        dto.setTraceId(traceId);
+                        dto.setStatus(ExecutorTaskStatusEnum.getTaskStatusByValue(nowStatus));
+                        DataxJobConstant.executorKafkaLogs.put(jobKey,dto);
+                    }
                 }
             }else{
                 DataxLogDTO dto = new DataxLogDTO();
@@ -60,6 +69,7 @@ public class DataxLogConsumer {
                 dto.setTimestamp(timestamp);
                 dto.setJobId(jobId);
                 dto.setTaskId(taskId);
+                dto.setStatus(ExecutorTaskStatusEnum.getTaskStatusByValue(nowStatus));
                 DataxJobConstant.executorKafkaLogs.put(jobKey,dto);
             }
         }
