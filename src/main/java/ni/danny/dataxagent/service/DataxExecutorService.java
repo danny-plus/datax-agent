@@ -1,5 +1,6 @@
 package ni.danny.dataxagent.service;
 
+import ni.danny.dataxagent.dto.DataxExecutorTaskDTO;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 
@@ -7,38 +8,37 @@ public interface DataxExecutorService {
     /**
      * 执行器注册上线
      */
-    void regist() throws Throwable;
+    void regist() ;
 
     /**
      * 注册成功后，进行初始化
      */
-    void init() throws Throwable;
+    void init() throws Exception;
 
     /**
      * 注册成功后，启动监听
      */
-    void listen() throws Throwable;
+    void listen() throws Exception;
 
     /**
      * 收到新任务
      */
-    void receiveTask(ChildData data) throws Throwable;
+    void receiveTask(DataxExecutorTaskDTO dataxExecutorTaskDTO);
 
     /**
      * 完成任务
      */
-    void finishTask(ChildData data) throws Throwable;
+    void finishTask(DataxExecutorTaskDTO dataxExecutorTaskDTO) ;
 
     /**
      * 拒绝任务
      */
-    void rejectTask(ChildData data) throws Throwable;
+    void rejectTask(DataxExecutorTaskDTO dataxExecutorTaskDTO) ;
 
     /**
      *
-     * 处理相关事件
+     * 事件分发处理
      */
     void process(CuratorCacheListener.Type type, ChildData oldData, ChildData data);
 
-    void createTask(ChildData data);
 }

@@ -92,8 +92,9 @@ public class ListenServiceImpl implements ListenService {
         try{
             pathChildrenCache.start();
         pathChildrenCache.listenable().addListener((type, oldData, data) -> {
-            log.info("executor watch job executor child change===>"+type+"   "+oldData+"   "+data);
+            //log.info("executor watch job executor child change===>"+type+"   "+oldData+"   "+data);
             dataxExecutorService.process(type,oldData,data);
+
         });
         }catch (Exception exception){
             exception.printStackTrace();

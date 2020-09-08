@@ -72,7 +72,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         driverEventList.clear();
         idleExecutorThreadSet.clear();
 
-        updateDriverName(driverName,appInfoComp.getHostnameAndPort());
+        updateDriverName(driverName,appInfoComp.getIpAndPort());
 
         DataxJobConstant.dataxDTOS.clear();
         ZookeeperConstant.onlineExecutorSet.clear();
@@ -130,7 +130,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     public void regist() {
         try{
             DataxJobConstant.executorKafkaLogs.clear();
-            zookeeperDriverClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.DRIVER_PATH, ("http://"+appInfoComp.getHostnameAndPort()).getBytes());
+            zookeeperDriverClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.DRIVER_PATH, ("http://"+appInfoComp.getIpAndPort()).getBytes());
             listenService.driverWatchExecutor();
             listenService.driverWatchJobExecutor();
             init();
@@ -141,7 +141,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
                     regist();
                 }else{
                     String info =  new String(zookeeperDriverClient.getData().forPath(ZookeeperConstant.DRIVER_PATH));
-                    if(("http://"+appInfoComp.getHostnameAndPort()).equals(info)){
+                    if(("http://"+appInfoComp.getIpAndPort()).equals(info)){
                         listenService.driverWatchExecutor();
                         listenService.driverWatchJobExecutor();
                         init();
@@ -488,7 +488,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     public void stopListenKafka(int num) {
         try{
             String data = new String( zookeeperDriverClient.getData().forPath(DRIVER_PATH));
-            if(!("http://"+appInfoComp.getHostnameAndPort()).equals(data)){
+            if(!("http://"+appInfoComp.getIpAndPort()).equals(data)){
                 dataxLogConsumer.stopListen();
             }
         }catch (Exception ex){
