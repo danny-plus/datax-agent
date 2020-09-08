@@ -8,26 +8,62 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 
 public interface DataxDriverService {
     /**
-     *
-     */
-    void init();
-
-    /**
      * 注册成为Driver
      */
     void regist();
 
-    void managerExecutor(CuratorCacheListener.Type type, ChildData oldData, ChildData data);
+    /**
+     * 启动事件监听
+     */
 
+    /**
+     * 成为Driver后，进行初始化
+     */
+    void init();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * 执行器上线
+     * @param data
+     */
     void executorUp(ChildData data);
 
+    /**
+     * 执行器掉线
+     * @param oldData
+     */
     void executorDown(ChildData oldData);
+
 
     /**
      * 检查任务分配情况
      * @param jobId
      */
     DataxDTO checkJob(String jobId) throws Exception;
+
+
+    /**
+     * 任务拆分
+     * @param jobId
+     * @param jobDto
+     * @throws Exception
+     */
 
     void splitJob(String jobId,DataxDTO jobDto) throws Exception;
 
@@ -43,6 +79,17 @@ public interface DataxDriverService {
      * @param executorPath
      */
     void distributeTask(String executorPath) throws Exception;
+
+
+    void managerExecutor(CuratorCacheListener.Type type, ChildData oldData, ChildData data);
+
+    /**
+     * 执行器完成任务
+     */
+
+    /**
+     * 执行器拒绝任务
+     */
 
     /**
      * 调度器管理，任务执行器节点的变化

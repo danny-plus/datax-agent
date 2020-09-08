@@ -12,13 +12,21 @@ import ni.danny.dataxagent.callback.ExecutorDataxJobCallback;
 import ni.danny.dataxagent.constant.DataxJobConstant;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.dto.DataxDTO;
+import ni.danny.dataxagent.enums.exception.DataxAgentExceptionCodeEnum;
+import ni.danny.dataxagent.exception.DataxAgentCreateJobJsonException;
+import ni.danny.dataxagent.exception.DataxAgentException;
 import ni.danny.dataxagent.service.DataxAgentService;
 import org.apache.curator.framework.CuratorFramework;
+import org.joda.time.DateTime;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 @Slf4j
 @Service
@@ -33,19 +41,31 @@ public class DataxAgentServiceImpl implements DataxAgentService {
     @Autowired
     private Gson gson;
 
-    @Autowired
-    private CuratorFramework zookeeperExecutorClient;
-
     @Override
-    public String createDataxJobJsonFile(DataxDTO dataxDTO) {
+    public String createDataxJobJsonFile(DataxDTO dataxDTO) throws IOException, DataxAgentException {
        return createDataxJobJsonFile(
                dataxDTO.getJobId()+ ZookeeperConstant.JOB_TASK_SPLIT_TAG+dataxDTO.getTaskId()
                ,gson.toJson(dataxDTO));
     }
 
     @Override
-    public String createDataxJobJsonFile(String taskName,String json) {
-        return null;
+    public String createDataxJobJsonFile(String taskName,String json) throws IOException, DataxAgentException {
+        byte[] jsonByte = json.getBytes();
+        String fullPath = dataxScriptHome+"/"+new DateTime().toString("yyyyMMdd")+ "/"+taskName+".json";
+        if(null!=jsonByte){
+            File file =new File(fullPath);
+            if(!file.exists()){
+                File dir = new File(file.getParent());
+                dir.mkdirs();
+                file.createNewFile();
+            }
+            FileOutputStream outputStream = new FileOutputStream(file);
+            outputStream.write(jsonByte);
+            outputStream.close();
+            return fullPath;
+        }else{
+            throw DataxAgentCreateJobJsonException.create(DataxAgentExceptionCodeEnum.JSON_EMPTY,"taskName =["+taskName+"] json is empty");
+        }
     }
 
     @Override

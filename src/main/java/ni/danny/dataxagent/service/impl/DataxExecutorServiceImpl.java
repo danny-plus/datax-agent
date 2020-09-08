@@ -49,7 +49,14 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
     private int maxPoolSize;
 
     @Override
-    public void init() {
+    public void regist() throws Throwable {
+            zookeeperExecutorClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.EXECUTOR_ROOT_PATH+"/"+appInfoComp.getHostnameAndPort(), ("http://"+appInfoComp.getHostnameAndPort()).getBytes());
+            listen();
+            init();
+    }
+
+    @Override
+    public void init() throws Throwable{
         if(!STATUS_INIT.equals(ZookeeperConstant.updateExecutorStatus(null,STATUS_INIT))){
             log.error("executor init failed, the executor status update failed");
             return;
@@ -62,15 +69,26 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
     }
 
     @Override
-    public void regist() {
-        try{
-            zookeeperExecutorClient.create().withMode(CreateMode.EPHEMERAL).forPath(ZookeeperConstant.EXECUTOR_ROOT_PATH+"/"+appInfoComp.getHostnameAndPort(), ("http://"+appInfoComp.getHostnameAndPort()).getBytes());
-            listenService.executorWatchExecutor();
-            init();
-        }catch (Exception ex){
-            log.error("executor regist failed ==>"+ex);
-        }
+    public void listen() throws Throwable {
+        listenService.executorWatchJobExecutor();
     }
+
+    @Override
+    public void receiveTask(ChildData data) throws Throwable {
+
+    }
+
+    @Override
+    public void finishTask(ChildData data) throws Throwable {
+
+    }
+
+    @Override
+    public void rejectTask(ChildData data) throws Throwable {
+
+    }
+
+
 
     @Override
     public void process(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {

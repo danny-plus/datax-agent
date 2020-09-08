@@ -16,7 +16,7 @@ public interface ListenService {
     /**
      * 执行器监控自身任务
      */
-    void executorWatchExecutor();
+    void executorWatchJobExecutor();
 
     /**
      * 调度器监控任务执行器
