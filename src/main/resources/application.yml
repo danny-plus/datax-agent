@@ -14,6 +14,8 @@ datax:
   home: /Users/danny_ni/Workspace/dev-tools/datax
   job:
     home: /Users/danny_ni/Workspace/dev-tools/dataxjob/scripts/
+    task:
+      maxRejectTimes: 3
   excutor:
     pool:
       corePoolSize: 2

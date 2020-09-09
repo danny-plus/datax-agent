@@ -51,6 +51,9 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     @Value("${datax.maxCheckTimes}")
     private int maxCheckTimes;
 
+    @Value("${datax.job.task.maxRejectTimes}")
+    private int taskMaxRejectTimes;
+
     @Autowired
     private Gson gson;
 
@@ -145,7 +148,9 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         onlineExecutorSet.clear();
         onlineExecutorSet.addAll(tmpSet);
 
-        checkJobExecutor();
+        checkOfflineJobExecutor();
+
+        checkOnlineExecutor();
 
         //每10分钟进行一次巡检
         driverEventList.add(new ZookeeperEventDTO("scanExecutor",null,null,null,10*60*1000));
@@ -154,7 +159,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     /**
      * 检查所有的job/executor/executorIP:port/threadId
      */
-    private void checkJobExecutor(){
+    private void checkOfflineJobExecutor(){
         try{
             List<String> jobExecutors = zookeeperDriverClient.getChildren().forPath(JOB_EXECUTOR_ROOT_PATH);
             Set<String> tmpSet = new HashSet<>(onlineExecutorSet.size());
@@ -264,6 +269,38 @@ public class DataxDriverServiceImpl implements DataxDriverService {
         return result;
     }
 
+    /**
+     * 检查所有的在线执行器，如果有空闲的，则进行任务分配
+     */
+    private void checkOnlineExecutor(){
+        Set<String> tmpSet = new HashSet<>(onlineExecutorSet.size());
+        tmpSet.addAll(onlineExecutorSet);
+        Iterator<String> iterator = tmpSet.iterator();
+        try{
+            while(iterator.hasNext()){
+                String executor = iterator.next();
+                Stat executorStat = zookeeperDriverClient.checkExists().forPath(EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+executor);
+                if(executorStat != null){
+                    for(int i=0;i<executorMaxPoolSize;i++){
+                        Stat threadStat = zookeeperDriverClient.checkExists().forPath(EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG
+                                +executor+ZOOKEEPER_PATH_SPLIT_TAG+i);
+                        if(threadStat != null){
+                            List<String> threadTasks = zookeeperDriverClient.getChildren().forPath(EXECUTOR_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG
+                                    +executor+ZOOKEEPER_PATH_SPLIT_TAG+i);
+                            if(threadTasks == null ||threadTasks.size()<=0){
+                                dispatchByExecutorThread(executor,i+"");
+                            }
+                        }
+                    }
+                }else{
+                    if(checkExecutorHealth(executor)){
+                        onlineExecutorSet.remove(executor);
+                    }
+                }
+            }
+        }catch (Exception ignore){}
+    }
+
     private boolean checkExecutorHealth(String executor){
         ActuatorHealthDTO healthDTO = restTemplate.getForObject(HTTP_PROTOCOL_TAG+executor+ZOOKEEPER_PATH_SPLIT_TAG+EXECUTOR_HEALTH_CHECK_URL,ActuatorHealthDTO.class);
         if(!HEALTH_UP.equals(healthDTO.getStatus().toUpperCase())){
@@ -277,30 +314,108 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     public void scanJob() throws Exception  {
         //扫描全部任务
         List<String> jobList = zookeeperDriverClient.getChildren().forPath(JOB_LIST_ROOT_PATH);
-        Set<String> tmpSet = new HashSet<>(jobList.size());
-        if(jobList!=null && jobList.size()>0){
-            for(String job:jobList){
-                tmpSet.add(job);
-            }
-        }
+
+
         waitForExecutorJobTaskSet.clear();
-        waitForExecutorJobTaskSet.addAll(tmpSet);
+        waitForExecutorJobTaskSet.addAll(jobList);
         //检查所有未完成的任务
-
-
-
+        try{
+            if(jobList!=null && jobList.size()>0){
+                for(String job:jobList){
+                    checkJob(job);
+                }
+            }
+        }catch (Exception ignore){}
 
         //10分钟进行一次巡检
         driverEventList.add(new ZookeeperEventDTO("scanJob",null,null,null,10*60*1000));
     }
 
+    /**
+     * 检查单个JOB下的所有TASK
+     * @param jobId
+     */
+    private void checkJob(String jobId) throws Exception{
+        Stat jobStat = zookeeperDriverClient.checkExists().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+jobId);
+        if(jobStat!=null){
+            List<String> taskList = zookeeperDriverClient.getChildren().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+jobId);
+            boolean jobDel = false;
+            int taskDelNum = 0;
+            if(taskList!=null&&taskList.size()>0){
+                for(String task:taskList){
+                    if(checkJobTask(jobId,task)){
+                        taskDelNum = taskDelNum+1;
+                    }
+                }
+            }
+
+            if(taskDelNum == taskList.size()){
+                String jobData = new String(zookeeperDriverClient.getData().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+jobId));
+                if(DataxJobConstant.JOB_FINISH.toString().equals(jobData)){
+                    zookeeperDriverClient.delete().guaranteed().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+jobId);
+                }else{
+                    DataxDTO jobDto = gson.fromJson(jobData,DataxDTO.class);
+                    List<DataxDTO> dataxList = splitJob(jobDto);
+                    for(DataxDTO taskDto : dataxList){
+                        dispatchByJobTask(taskDto.getJobId(),taskDto.getTaskId());
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean checkJobTask(String jobId,String taskId)throws Exception{
+        boolean removeTag = true;
+        Stat taskStat = zookeeperDriverClient.checkExists().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+jobId
+                +ZOOKEEPER_PATH_SPLIT_TAG+taskId);
+        if(taskStat!=null){
+            List<String> taskThreads = zookeeperDriverClient.getChildren().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+jobId
+                    +ZOOKEEPER_PATH_SPLIT_TAG+taskId);
+            int rejectNum = 0;
+            int finishNum = 0;
+            if(taskThreads!=null&& taskThreads.size()>0){
+                for(String taskThread:taskThreads){
+                    switch (checkJobTaskThread(jobId,taskId,taskThread).getValue()){
+                       case "FINISH": finishNum = finishNum+1; break;
+                       case "REJECT": rejectNum = rejectNum+1;break;
+                        default: break;
+                    }
+                }
+            }
+
+            if(finishNum>0||rejectNum >= taskMaxRejectTimes){
+                removeTag = true;
+            }else{
+                dispatchByJobTask(jobId,taskId);
+                removeTag = false;
+            }
+        }
+        return removeTag;
+    }
+
+    private ExecutorTaskStatusEnum checkJobTaskThread(String jobId,String taskId,String executorThread) throws Exception{
+        Stat taskThreadStat = zookeeperDriverClient.checkExists().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+jobId
+                +ZOOKEEPER_PATH_SPLIT_TAG+taskId+ZOOKEEPER_PATH_SPLIT_TAG+executorThread);
+        if(taskThreadStat != null){
+            String taskThreadStatus = new String(zookeeperDriverClient.getData().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+jobId
+                    +ZOOKEEPER_PATH_SPLIT_TAG+taskId+ZOOKEEPER_PATH_SPLIT_TAG+executorThread));
+
+            ExecutorTaskStatusEnum.getTaskStatusByValue(taskThreadStatus);
+        }
+
+        return  ExecutorTaskStatusEnum.UNKOWN;
+    }
+
     @Override
     public DataxDTO createJob(DataxDTO dataxDTO) {
+
         return null;
     }
 
     @Override
     public List<DataxDTO> splitJob(DataxDTO dataxDTO) {
+        //拆分并创建节点
+
         return null;
     }
 
