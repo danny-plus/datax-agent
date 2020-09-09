@@ -28,4 +28,6 @@ public class DataxExecutorTaskDTO {
            this.taskId = job[1];
         }
     }
+
+    public DataxExecutorTaskDTO(){}
 }

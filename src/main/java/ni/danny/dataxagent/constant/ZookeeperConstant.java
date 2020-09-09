@@ -36,6 +36,7 @@ public class ZookeeperConstant {
     /** jobId-taskId **/
     public final static ConcurrentSkipListSet<String> waitForExecutorJobTaskSet = new ConcurrentSkipListSet<>();
 
+
     public static String driverStatus = "INIT";
 
     public static String executorStatus = "INIT";

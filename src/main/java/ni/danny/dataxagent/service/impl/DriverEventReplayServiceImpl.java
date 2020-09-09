@@ -24,6 +24,7 @@ public class DriverEventReplayServiceImpl implements DriverEventReplayService {
     @Async("driverReplayThreadExecutor")
     public void replay() {
         log.info("start the ExecutorEventReplay");
+        //TODO，初始化及扫描期间，暂停重放
         while(true){
             try{
                 ZookeeperEventDTO zookeeperEventDTO = ZookeeperConstant.driverEventList.take();

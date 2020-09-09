@@ -2,10 +2,8 @@ package ni.danny.dataxagent.service;
 
 import ni.danny.dataxagent.dto.DataxDTO;
 import ni.danny.dataxagent.dto.DataxExecutorTaskDTO;
-import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 
 import java.util.List;
 
@@ -53,12 +51,13 @@ public interface DataxDriverService {
     /**
      * 任务分发 BY 执行器线程
      */
-    void dispatchByExecutorThread(String executor,String thread);
+    boolean dispatchByExecutorThread(String executor,String thread);
 
     /**
      * 任务分发 BY 任务子模块
+     * @return 已分配，未分配
      */
-    void dispatchByJobTask(String jobId,String taskId);
+    boolean dispatchByJobTask(String jobId,String taskId);
 
     /**
      * 执行器事件分发器
