@@ -4,18 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.config.AppInfoComp;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.kafka.DataxLogConsumer;
-import ni.danny.dataxagent.service.DataxDriverService;
+import ni.danny.dataxagent.service.driver.DataxDriverService;
 import ni.danny.dataxagent.service.DataxExecutorService;
 import ni.danny.dataxagent.service.ListenService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.*;
-import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
-import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @Service
