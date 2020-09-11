@@ -1,7 +1,9 @@
 package ni.danny.dataxagent.driver.config;
 
+import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
 import com.lmax.disruptor.util.DaemonThreadFactory;
 import ni.danny.dataxagent.driver.dto.event.DriverExecutorEvent;
 import ni.danny.dataxagent.driver.dto.event.DriverExecutorEventFactory;
@@ -53,7 +55,8 @@ public class EventConfig {
     @Bean
     public RingBuffer<DriverExecutorEvent> driverExecutorEventRingBuffer(){
         Disruptor<DriverExecutorEvent> disruptor
-                = new Disruptor<>(driverExecutorEventFactory,1024*1024, DaemonThreadFactory.INSTANCE);
+                = new Disruptor<>(driverExecutorEventFactory,1024*1024, DaemonThreadFactory.INSTANCE
+                , ProducerType.MULTI,new BlockingWaitStrategy());
         disruptor.handleEventsWith(driverExecutorEventHandler);
         disruptor.start();
         return disruptor.getRingBuffer();
@@ -69,7 +72,8 @@ public class EventConfig {
     @Bean
     public RingBuffer<DriverJobEvent> driverJobEventRingBuffer(){
         Disruptor<DriverJobEvent> disruptor
-                = new Disruptor<>(driverJobEventFactory,1024*1024,DaemonThreadFactory.INSTANCE);
+                = new Disruptor<>(driverJobEventFactory,1024*1024,DaemonThreadFactory.INSTANCE
+                ,ProducerType.MULTI,new BlockingWaitStrategy());
         disruptor.handleEventsWith(driverJobEventHandler);
         disruptor.start();
         return disruptor.getRingBuffer();
