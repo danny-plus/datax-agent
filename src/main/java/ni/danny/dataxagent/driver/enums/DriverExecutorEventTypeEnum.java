@@ -1,4 +1,4 @@
-package ni.danny.dataxagent.enums;
+package ni.danny.dataxagent.driver.enums;
 
 public enum DriverExecutorEventTypeEnum {
 }

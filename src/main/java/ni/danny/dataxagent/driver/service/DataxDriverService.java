@@ -1,4 +1,4 @@
-package ni.danny.dataxagent.service.driver;
+package ni.danny.dataxagent.driver.service;
 
 import ni.danny.dataxagent.dto.DataxDTO;
 

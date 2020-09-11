@@ -2,7 +2,7 @@ package ni.danny.dataxagent.config;
 
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
-import ni.danny.dataxagent.service.driver.DataxDriverService;
+import ni.danny.dataxagent.driver.service.DataxDriverService;
 import ni.danny.dataxagent.service.DataxExecutorService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.state.ConnectionStateListener;

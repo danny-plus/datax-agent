@@ -1,7 +1,7 @@
-package ni.danny.dataxagent.service.driver;
+package ni.danny.dataxagent.driver.service;
 
 import ni.danny.dataxagent.callback.DriverCallback;
-import ni.danny.dataxagent.dto.event.DriverJobEventDTO;
+import ni.danny.dataxagent.driver.dto.event.DriverExecutorEventDTO;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 
@@ -49,7 +49,7 @@ public interface DataxDriverExecutorService {
      * 若thread节点已存在，则不进行创建，若THREAD节点DATA = WAITRECYCLE 待回收，则重新更新为READY状态
      * @param eventDTO
      */
-    void executorCreatedEvent(DriverJobEventDTO eventDTO);
+    void executorCreatedEvent(DriverExecutorEventDTO eventDTO);
 
     /**
      * 执行器节点删除事件【下线】
@@ -58,7 +58,7 @@ public interface DataxDriverExecutorService {
      * 若thread无关联任务，则删除thread节点
      * @param eventDTO
      */
-    void executorRemovedEvent(DriverJobEventDTO eventDTO);
+    void executorRemovedEvent(DriverExecutorEventDTO eventDTO);
 
 
     /**
@@ -67,7 +67,7 @@ public interface DataxDriverExecutorService {
      *
      * @param eventDTO
      */
-    void threadCreatedEvent(DriverJobEventDTO eventDTO);
+    void threadCreatedEvent(DriverExecutorEventDTO eventDTO);
 
     /**
      * 工作线程被标记为待回收
@@ -75,14 +75,14 @@ public interface DataxDriverExecutorService {
      * 若是以上两种状态，则移除本线程
      * @param eventDTO
      */
-    void threadUpdateWaitRecycleEvent(DriverJobEventDTO eventDTO);
+    void threadUpdateWaitRecycleEvent(DriverExecutorEventDTO eventDTO);
 
     /**
      * 工作线程被标记为READY事件
      * 尝试分配TASK
      * @param eventDTO
      */
-    void threadUpdateReadyEvent(DriverJobEventDTO eventDTO);
+    void threadUpdateReadyEvent(DriverExecutorEventDTO eventDTO);
 
 
     /**
@@ -90,13 +90,13 @@ public interface DataxDriverExecutorService {
      * 检查同一一个executor下，无其他执行器，则移除/job/executor/ip:port
      * @param eventDTO
      */
-    void threadRemovedEvent(DriverJobEventDTO eventDTO);
+    void threadRemovedEvent(DriverExecutorEventDTO eventDTO);
 
     /**
      * 工作线程被关联新任务【此为执行器逻辑什么都不用做】
      * @param eventDTO
      */
-    void threadTaskCreatedEvent(DriverJobEventDTO eventDTO);
+    void threadTaskCreatedEvent(DriverExecutorEventDTO eventDTO);
 
 
 
@@ -105,7 +105,7 @@ public interface DataxDriverExecutorService {
      * 工作线程-TASK节点，内容变更为traceId
      * @param eventDTO
      */
-    void threadTaskUpdatedEvent(DriverJobEventDTO eventDTO);
+    void threadTaskUpdatedEvent(DriverExecutorEventDTO eventDTO);
 
 
     /**
@@ -115,7 +115,7 @@ public interface DataxDriverExecutorService {
      *  --任务被拒绝 --执行器工作线程移除了任务，若线程标记为待回收，则直接删除节点，重新分配任务，没有新任务则加入空闲线程]
      * @param eventDTO
      */
-    void threadTaskRemovedEvent(DriverJobEventDTO eventDTO);
+    void threadTaskRemovedEvent(DriverExecutorEventDTO eventDTO);
 
 
     /**

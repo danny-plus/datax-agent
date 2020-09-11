@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.config.AppInfoComp;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.kafka.DataxLogConsumer;
-import ni.danny.dataxagent.service.driver.DataxDriverService;
+import ni.danny.dataxagent.driver.service.DataxDriverService;
 import ni.danny.dataxagent.service.DataxExecutorService;
 import ni.danny.dataxagent.service.ListenService;
 import org.apache.curator.framework.CuratorFramework;
@@ -27,8 +27,6 @@ public class ListenServiceImpl implements ListenService {
     @Autowired
     private DataxExecutorService dataxExecutorService;
 
-    @Autowired
-    private DataxDriverService dataxDriverService;
 
 
     @Autowired
@@ -54,7 +52,7 @@ public class ListenServiceImpl implements ListenService {
                     }catch (InterruptedException ignore){
 
                     }
-                     dataxDriverService.regist();
+                   //  dataxDriverService.regist();
                 }
             });
         }catch (Exception exception){
@@ -72,7 +70,7 @@ public class ListenServiceImpl implements ListenService {
         pathChildrenCache.start();
         pathChildrenCache.listenable().addListener(
                 (type, oldData, data) -> {
-                    dataxDriverService.dispatchExecutorEvent(type,oldData,data);
+                  //  dataxDriverService.dispatchExecutorEvent(type,oldData,data);
                 }
         );
     }catch (Exception exception){
@@ -86,7 +84,7 @@ public class ListenServiceImpl implements ListenService {
         try{
             pathChildrenCache.start();
             pathChildrenCache.listenable().addListener((type, oldData, data) -> {
-                dataxDriverService.dispatchJobExecutorEvent(type,oldData,data);
+                //dataxDriverService.dispatchJobExecutorEvent(type,oldData,data);
             });
         }catch (Exception exception){
             exception.printStackTrace();

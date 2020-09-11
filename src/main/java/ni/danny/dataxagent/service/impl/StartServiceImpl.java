@@ -3,7 +3,7 @@ package ni.danny.dataxagent.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.service.*;
-import ni.danny.dataxagent.service.driver.DataxDriverService;
+import ni.danny.dataxagent.driver.service.DataxDriverService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.state.ConnectionStateListener;
@@ -34,11 +34,7 @@ public class StartServiceImpl implements StartService {
     @Autowired
     private ConnectionStateListener executorSessionConnectionListener;
 
-    @Autowired
-    private DriverEventReplayService driverEventReplayService;
 
-    @Autowired
-    private ExecutorEventReplayService executorEventReplayService;
 
 
     @Override
@@ -70,7 +66,7 @@ public class StartServiceImpl implements StartService {
         }
         zookeeperDriverClient.getConnectionStateListenable().addListener(driverSessionConnectionListener);
         log.info("zookeeper driver client start");
-        driverEventReplayService.replay();
+       // driverEventReplayService.replay();
         dataxDriverService.regist();
     }
 
@@ -96,7 +92,7 @@ public class StartServiceImpl implements StartService {
         }
         zookeeperExecutorClient.getConnectionStateListenable().addListener(executorSessionConnectionListener);
         log.info("zookeeper executor client start");
-        executorEventReplayService.replay();
+       // executorEventReplayService.replay();
         dataxExecutorService.regist();
 
     }
