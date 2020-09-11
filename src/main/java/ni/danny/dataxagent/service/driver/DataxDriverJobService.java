@@ -19,17 +19,21 @@ import java.util.List;
  *      3.job/list/jobId/taskId/ip:port-thread [NODE_CHANGED --任务执行状态变更为REJECT
  *                                              ，判断是否超过单个TASK拒绝次数，若超过，则变更TASKID DATA为REJEC，否则重新分配任务];
  *
+ *
+ *      *** waitTaskSet 只由scanJob,dispatchTask 管理
+ *
  */
 public interface DataxDriverJobService {
 
     /**
-     * 任务巡检：扫描整个job/list目录
-     *              1.维护一个全量的尚未执行完成的jobId-taskId的SET，用于快速分配任务
-     *              2.维护一个全量的JOB SET,用于新到任务时，快速剔除已有任务，避免重复同时执行任务
-     *         执行期间，暂停任务事件的重放
-     *         将扫描到的未执行的TASK 维护到WAITFOREXECUTETASKSET中
-     *         执行成功后，回调执行成功方法
-     *         执行失败，回调失败方法
+     * 任务巡检
+     *      暂停任务事件推送【DelayQueue暂停】-只收集，不推送
+     *      清空waitTaskSet
+     *      扫描所有jobId/taskId
+     *      将无关联执行线程【执行中】的加入临时set
+     *      waitTaskSet.addAll(tmpSet)
+     *      启动任务事件推送
+     *
      */
     void scanJob(DriverCallback successCallback,DriverCallback failCallback);
 
@@ -37,7 +41,7 @@ public interface DataxDriverJobService {
     /**
      * 任务执行器事件分发器
      */
-    void dispatchJobExecutorEvent(CuratorCacheListener.Type type, ChildData oldData, ChildData data);
+    void dispatchJobEvent(CuratorCacheListener.Type type, ChildData oldData, ChildData data);
 
     /**
      * JOB创建事件，进行任务拆分

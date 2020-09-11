@@ -18,8 +18,8 @@ public interface DataxDriverService {
      * 启动事件监听
      * 监听：1.监控/executor[执行器根目录],监控所有执行器上线、下线事件，将事件写入执行器事件队列
      *      2.监控/job/executor[job执行器目录],监控 /job/executor/thread/jobId-taskId[某个子任务的移除事件
-     *          ,子任务被移除代表子任务完成或拒绝]，将事件写入任务事件队列
-     *      3.监控/job/list[job根目录]，监控/job/list/jobId[新增事件，代表有新到数据同步工作]，将此事件写入任务事件队列
+     *          ,子任务被移除代表子任务完成或拒绝]，将事件写入任务事件队列【使用disruptor队列】
+     *      3.监控/job/list[job根目录]，监控/job/list/jobId[新增事件，代表有新到数据同步工作]，将此事件写入任务事件队列【使用disruptor队列】
      *      4.监听KAFKA-datax-log队列消息，维护可获取到的TASK信息：状态包括「INIT,START,RUNNING,FINISH,REJECT」,状态变化根据ENUM信息管控
      *
      */
@@ -54,7 +54,7 @@ public interface DataxDriverService {
 
 
     /**
-     * 新任务创建
+     * 新任务创建，提供给controller层的方法
      */
     DataxDTO createJob(DataxDTO dataxDTO);
 

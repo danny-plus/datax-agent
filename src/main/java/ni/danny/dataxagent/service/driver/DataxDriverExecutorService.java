@@ -22,17 +22,18 @@ import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
  *         9.job/executor/Ip:Port/thread/jobId-taskId [NODE_REMOVED --任务被拒绝 --执行器工作线程移除了任务
  *                                                  ，若线程标记为待回收，则直接删除节点，重新分配任务，没有新任务则加入空闲线程]
  *
+ *
+ *        **** idleThreadSet仅由ScanExecutor , executorRemovedEvent ,dispatchTask 方法管理
  */
 public interface DataxDriverExecutorService {
     /**
      * 执行器巡检
-     * 停止执行器事件推送
-     * 扫描所有在线执行器 /executor，放入一个临时SET中
-     * 扫描所有job/executor
-     * 逐个扫描job/executor/ip:port/thread，
-     * ----若该thread所在对executor不是在线，则检查该thread是否有关联任务，若存在关联任务则标记为WAITRECYCLE，否则直接删除该节点
-     * ----若该thread所在的executor在线，则检查thread是否为READY，若不READY则变更为READY，并加入idleThreadSet中
-     *
+     * 停止执行器事件推送【】-只收集，不推送
+     * 清空idleThreadSet
+     * 扫描所有在线executor
+     * 根据在线executor扫描得到所有thread,并筛选出无任务的thread
+     * 加入临时SET
+     * idleThreadSet.addAll(tempSet)
      * 恢复执行器事件推送
      */
     void scanExecutor(DriverCallback successCallback,DriverCallback failCallback);
@@ -119,12 +120,12 @@ public interface DataxDriverExecutorService {
 
     /**
      * 尝试分配任务
-     * 1.从waitforexecuteTaskQueue取出一个TASK
+     * 1.从waitforexecuteTaskSet取出一个TASK
      * 2.检查任务具体状态 job/list/jobId/taskId ,并非REJECT OR FINISH
      * 3.检查任务是否曾关联该任务，如果关联过，则放弃本次任务分配，分配结果为失败
      * 4.创建/job/list/jobId/taskId/executor-thread,DATA=INIT，失败则放弃本次任务分配，分配结果失败
      * 5.创建/job/executor/ip:port/thread/jobId-taskId,DATA=INIT,失败则放弃本次任务分配，分配结果失败
-     * 任务分配失败时，将thread放回idleThreadQueue中
+     * 任务分配失败时，将thread放回idleThreadSet中
      * @param executor
      * @param thread
      * @return true 分配成功，false分配失败

@@ -17,7 +17,7 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
     }
 
     @Override
-    public void dispatchJobExecutorEvent(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
+    public void dispatchJobEvent(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
 
     }
 
