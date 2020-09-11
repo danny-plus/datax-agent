@@ -35,8 +35,6 @@ public class StartServiceImpl implements StartService {
     private ConnectionStateListener executorSessionConnectionListener;
 
 
-
-
     @Override
     public void run(ApplicationArguments applicationArguments) {
         registerDriver();
@@ -66,7 +64,6 @@ public class StartServiceImpl implements StartService {
         }
         zookeeperDriverClient.getConnectionStateListenable().addListener(driverSessionConnectionListener);
         log.info("zookeeper driver client start");
-       // driverEventReplayService.replay();
         dataxDriverService.regist();
     }
 
@@ -92,7 +89,6 @@ public class StartServiceImpl implements StartService {
         }
         zookeeperExecutorClient.getConnectionStateListenable().addListener(executorSessionConnectionListener);
         log.info("zookeeper executor client start");
-       // executorEventReplayService.replay();
         dataxExecutorService.regist();
 
     }
