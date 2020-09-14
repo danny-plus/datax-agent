@@ -25,6 +25,8 @@ public interface DataxDriverService {
      */
     void listen();
 
+    void stopListen();
+
     /**
      * 成为Driver后，进行初始化
      *      启动执行器巡检

@@ -10,7 +10,7 @@ public class ZookeeperConstant {
     public final static String NAME_SPACE = "datax-agent";
     public final static String DRIVER_PATH = "/driver";
     public final static String EXECUTOR_ROOT_PATH = "/executor";
-
+    public final static String JOB_ROOT_PATH = "/job";
     /** 任务目录下所有节点均为永久节点 */
     public final static String JOB_EXECUTOR_ROOT_PATH = "/job/executor";
 

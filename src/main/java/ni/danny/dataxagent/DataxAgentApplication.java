@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.CuratorCache;
 import org.apache.curator.retry.RetryNTimes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,32 +25,7 @@ public class DataxAgentApplication {
         SpringApplication.run(DataxAgentApplication.class, args);
     }
 
-    @Value("${datax.zookeeper.addressAndPort}")
-    private String zookeeperAddressAndPort;
 
-    @Bean
-    public CuratorFramework zookeeperDriverClient() {
-        return CuratorFrameworkFactory
-                .builder()
-                .connectString(zookeeperAddressAndPort)
-                .sessionTimeoutMs(5000)
-                .connectionTimeoutMs(5000)
-                .retryPolicy(new RetryNTimes(5, 1000))
-                .namespace(ZookeeperConstant.NAME_SPACE)
-                .build();
-    }
-
-    @Bean
-    public CuratorFramework zookeeperExecutorClient() {
-        return CuratorFrameworkFactory
-                .builder()
-                .connectString(zookeeperAddressAndPort)
-                .sessionTimeoutMs(5000)
-                .connectionTimeoutMs(5000)
-                .retryPolicy(new RetryNTimes(5, 1000))
-                .namespace(ZookeeperConstant.NAME_SPACE)
-                .build();
-    }
 
     @Bean
     public Gson gson(){
@@ -64,6 +40,8 @@ public class DataxAgentApplication {
         requestFactory.setReadTimeout(1000);
         return new RestTemplate(requestFactory);
     }
+
+
 
 
 }
