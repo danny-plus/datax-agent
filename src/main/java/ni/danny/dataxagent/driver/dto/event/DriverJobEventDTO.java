@@ -1,6 +1,5 @@
 package ni.danny.dataxagent.driver.dto.event;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;

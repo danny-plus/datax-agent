@@ -17,7 +17,7 @@ datax:
     task:
       maxRejectTimes: 3
       maxDispatchTimes: 5
-  excutor:
+  executor:
     pool:
       corePoolSize: 2
       maxPoolSize: 3

@@ -36,7 +36,7 @@ public interface DataxDriverExecutorService {
      * idleThreadSet.addAll(tempSet)
      * 恢复执行器事件推送
      */
-    void scanExecutor(DriverCallback successCallback,DriverCallback failCallback);
+    void scanExecutor();
 
     /**
      * 执行器事件分发器
@@ -78,7 +78,7 @@ public interface DataxDriverExecutorService {
     void threadUpdateWaitRecycleEvent(DriverExecutorEventDTO eventDTO);
 
     /**
-     * 工作线程被标记为READY事件
+     * 工作线程被标记为READY事件,检查是否有正在执行的任务,没有关联任务则尝试分配任务
      * 尝试分配TASK
      * @param eventDTO
      */
@@ -118,19 +118,8 @@ public interface DataxDriverExecutorService {
     void threadTaskRemovedEvent(DriverExecutorEventDTO eventDTO);
 
 
-    /**
-     * 尝试分配任务
-     * 1.从waitforexecuteTaskSet取出一个TASK
-     * 2.检查任务具体状态 job/list/jobId/taskId ,并非REJECT OR FINISH
-     * 3.检查任务是否曾关联该任务，如果关联过，则放弃本次任务分配，分配结果为失败
-     * 4.创建/job/list/jobId/taskId/executor-thread,DATA=INIT，失败则放弃本次任务分配，分配结果失败
-     * 5.创建/job/executor/ip:port/thread/jobId-taskId,DATA=INIT,失败则放弃本次任务分配，分配结果失败
-     * 任务分配失败时，将thread放回idleThreadSet中
-     * @param executor
-     * @param thread
-     * @return true 分配成功，false分配失败
-     */
-    boolean dispatchTask(String executor,String thread);
+    void dispatchEvent(DriverExecutorEventDTO eventDTO);
+
 
 
 }

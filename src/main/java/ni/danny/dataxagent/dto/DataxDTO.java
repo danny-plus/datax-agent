@@ -11,7 +11,7 @@ public class DataxDTO {
     private Job job;
     private SplitStrategy splitStrategy;
     private String jobId;
-    private String taskId;
+    private int taskId;
 
     @Data
     @EqualsAndHashCode

@@ -13,6 +13,7 @@ public class DriverExecutorEventDTO {
     private String executor;
     private int thread;
     private String jobTask;
+    private int retryNum=0;
     public DriverExecutorEventDTO(DriverExecutorEventTypeEnum type,String executor,int thread,String jobTask){
         this.executor = executor;
         this.thread = thread;
@@ -35,4 +36,8 @@ public class DriverExecutorEventDTO {
     private long currentTime;
     private long delay;
     private long delayTime;
+
+    public void updateRetry(){
+        this.retryNum = retryNum+1;
+    }
 }

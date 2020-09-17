@@ -37,7 +37,7 @@ public class DriverJobEventHandler implements EventHandler<DriverJobEvent> {
         }
         log.info(event.getDto().toString());
         switch (event.getDto().getType().toString()){
-            case "JOB_SCAN": dataxDriverJobService.scanJob(null,null);break;
+            case "JOB_SCAN": dataxDriverJobService.scanJob();break;
             case "JOB_CREATED": dataxDriverJobService.jobCreatedEvent(event.getDto());break;
             case "JOB_REJECTED": dataxDriverJobService.jobRejectedEvent(event.getDto());break;
             case "JOB_FINISHED": dataxDriverJobService.jobFinishedEvent(event.getDto());break;
@@ -46,6 +46,7 @@ public class DriverJobEventHandler implements EventHandler<DriverJobEvent> {
             case "TASK_FINISHED": dataxDriverJobService.taskFinishedEvent(event.getDto());break;
             case "TASK_THREAD_FINISHED": dataxDriverJobService.taskThreadFinishedEvent(event.getDto());break;
             case "TASK_THREAD_REJECTED": dataxDriverJobService.taskThreadRejectedEvent(event.getDto());break;
+            case "TASK_DISPATCH": dataxDriverService.dispatchTask();break;
         }
         event.clear();
     }

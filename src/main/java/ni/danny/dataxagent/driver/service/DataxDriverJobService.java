@@ -1,7 +1,6 @@
 package ni.danny.dataxagent.driver.service;
 
 import ni.danny.dataxagent.callback.DriverCallback;
-import ni.danny.dataxagent.driver.dto.event.DriverExecutorEventDTO;
 import ni.danny.dataxagent.driver.dto.event.DriverJobEventDTO;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
@@ -15,10 +14,11 @@ import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
  *      2.job/list/jobId/taskId [NODE_CHANGED --工作任务状态变更为完成，检查任务完成数量，若=JOB子任务数，则变更整个JOB DATA为FINISH];
  *      3.job/list/jobId/taskId/ip:port-thread [NODE_CHANGED --任务执行状态变更为完成，则更新TASKID DATA为FINISH];
  *      3.job/list/jobId/taskId/ip:port-thread [NODE_CHANGED --任务执行状态变更为REJECT
- *                                              ，判断是否超过单个TASK拒绝次数，若超过，则变更TASKID DATA为REJEC，否则重新分配任务];
+ *                                              ，判断是否超过单个TASK拒绝次数，若超过，则变更TASKID DATA为REJECT,否则重新分配任务];
  *
  *
- *      *** waitTaskSet 只由scanJob,dispatchTask 管理
+ *      *** waitForExecuteTaskQueue 只由scanJob,和taskcreated,负责添加
+ *                                  由DISPATCHTASK,负责移除，移除使用POLL方法
  *
  */
 public interface DataxDriverJobService {
@@ -33,7 +33,7 @@ public interface DataxDriverJobService {
      *      启动任务事件推送
      *
      */
-    void scanJob(DriverCallback successCallback,DriverCallback failCallback);
+    void scanJob();
 
 
     /**
@@ -57,16 +57,18 @@ public interface DataxDriverJobService {
      */
     void jobFinishedEvent(DriverJobEventDTO eventDTO);
 
+
+
     /**
-     * TASK创建事件，尝试进行任务分配
+     * TASK创建事件，尝试分配任务，此事件不由ZOOKEEPER分发得到
      * @param eventDTO
      */
     void taskCreatedEvent(DriverJobEventDTO eventDTO);
 
+
     /**
      * TASK拒绝事件，检查相同JOB下的其他TASK状态，
      * 若超过限制数量，则更新JOB节点DATA为REJECT
-     * 否则尝试进行任务分配
      *
      * @param eventDTO
      */
@@ -82,7 +84,8 @@ public interface DataxDriverJobService {
     /**
      * task的执行线程拒绝任务，检查相同TASK下的其他执行线程记录，
      * 是否全部为拒绝，且超过限制数量，若超过，则更新TASK节点DATA为REJECT
-     * 否则尝试进行任务分配
+     * 否则尝试添加进waitForExecuteTaskQueue
+     *      * 调用任务分配
      * @param eventDTO
      */
     void taskThreadRejectedEvent(DriverJobEventDTO eventDTO);
@@ -94,21 +97,6 @@ public interface DataxDriverJobService {
      */
     void taskThreadFinishedEvent(DriverJobEventDTO eventDTO);
 
-    /**
-     * 尝试分配任务，通过从ideaThreadQueue中取出空闲执行线程，为其分配任务
-     * 分配逻辑：1、将线程信息移除ideaThreadSET中，
-     *         2、检查线程是否真的为空闲状态（/job/executor/ip:port/threadId）无子节点
-     *         3、检查同JOB下的其他TASK是否存在执行中，并且在相同executor上，若存在且超过限值，则放弃此次任务分配，分配结果为失败
-     *         3、创建/job/list/jobId/taskId/ip:port-threadId，DATA信息为INIT，失败则放弃本次分配，分配结果为失败
-     *         4、创建/job/executor/ip:port/threadId/jobId-taskId,DATA为INIT，失败则删除上一步产生的节点，分配结果为失败
-     *
-     *         5、将线程放回ideaThreadSet
-     * @param jobId
-     * @param taskId
-     * @return true 分配成功；false 分配失败
-     */
-
-    boolean dispatchTask(String jobId,String taskId);
 
     void dispatchEvent(DriverJobEventDTO dto);
 

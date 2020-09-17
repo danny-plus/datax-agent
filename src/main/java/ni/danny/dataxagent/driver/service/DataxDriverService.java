@@ -1,5 +1,7 @@
 package ni.danny.dataxagent.driver.service;
 
+import ni.danny.dataxagent.driver.dto.ExecutorThreadDTO;
+import ni.danny.dataxagent.driver.dto.JobTaskDTO;
 import ni.danny.dataxagent.dto.DataxDTO;
 
 public interface DataxDriverService {
@@ -40,31 +42,18 @@ public interface DataxDriverService {
      */
     boolean checkDriverIsSelf() throws Exception;
 
-    /**
-     * 执行器巡检完成回调
-     */
-    void executorScanSuccessCallback();
-
-    /**
-     * 执行器巡检失败回调
-     */
-    void executorScanFailCallback();
-
-    /**
-     * 执行器巡检完成回调
-     */
-    void jobScanSuccessCallback();
-
-    /**
-     * 执行器巡检失败回调
-     */
-    void jobScanFailCallback();
 
 
     /**
      * 新任务创建，提供给controller层的方法
      */
     DataxDTO createJob(DataxDTO dataxDTO);
+
+    void dispatchTask();
+
+    void addWaitExecuteTask(JobTaskDTO taskDTO);
+
+    void addIdleThread(ExecutorThreadDTO threadDTO);
 
 
 }
