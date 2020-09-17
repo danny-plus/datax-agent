@@ -2,6 +2,7 @@ package ni.danny.dataxagent.driver.service;
 
 import ni.danny.dataxagent.callback.DriverCallback;
 import ni.danny.dataxagent.driver.dto.event.DriverExecutorEventDTO;
+import ni.danny.dataxagent.driver.dto.event.DriverJobEventDTO;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 
@@ -43,24 +44,24 @@ public interface DataxDriverJobService {
     /**
      * JOB创建事件，进行任务拆分
      */
-    void jobCreatedEvent(DriverExecutorEventDTO eventDTO);
+    void jobCreatedEvent(DriverJobEventDTO eventDTO);
 
     /**
      * JOB拒绝事件，进行告警或记录
      */
-    void jobRejectedEvent(DriverExecutorEventDTO eventDTO);
+    void jobRejectedEvent(DriverJobEventDTO eventDTO);
 
     /**
      * JOB完成事件，进行记录，并删除JOB
      * @param eventDTO
      */
-    void jobFinishedEvent(DriverExecutorEventDTO eventDTO);
+    void jobFinishedEvent(DriverJobEventDTO eventDTO);
 
     /**
      * TASK创建事件，尝试进行任务分配
      * @param eventDTO
      */
-    void taskCreatedEvent(DriverExecutorEventDTO eventDTO);
+    void taskCreatedEvent(DriverJobEventDTO eventDTO);
 
     /**
      * TASK拒绝事件，检查相同JOB下的其他TASK状态，
@@ -69,14 +70,14 @@ public interface DataxDriverJobService {
      *
      * @param eventDTO
      */
-    void taskRejectedEvent(DriverExecutorEventDTO eventDTO);
+    void taskRejectedEvent(DriverJobEventDTO eventDTO);
 
 
     /**
      * TASK完成事件，检查相同JOB下其他的TASK状态，若都为完成，则更新JOB节点DATA为FINISH
      * @param eventDTO
      */
-    void taskFinishedEvent(DriverExecutorEventDTO eventDTO);
+    void taskFinishedEvent(DriverJobEventDTO eventDTO);
 
     /**
      * task的执行线程拒绝任务，检查相同TASK下的其他执行线程记录，
@@ -84,14 +85,14 @@ public interface DataxDriverJobService {
      * 否则尝试进行任务分配
      * @param eventDTO
      */
-    void taskThreadRejectedEvent(DriverExecutorEventDTO eventDTO);
+    void taskThreadRejectedEvent(DriverJobEventDTO eventDTO);
 
 
     /**
      * task的执行线程完成任务，更新TASK节点DATA为FINISH
      * @param eventDTO
      */
-    void taskThreadFinishedEvent(DriverExecutorEventDTO eventDTO);
+    void taskThreadFinishedEvent(DriverJobEventDTO eventDTO);
 
     /**
      * 尝试分配任务，通过从ideaThreadQueue中取出空闲执行线程，为其分配任务
@@ -109,5 +110,6 @@ public interface DataxDriverJobService {
 
     boolean dispatchTask(String jobId,String taskId);
 
+    void dispatchEvent(DriverJobEventDTO dto);
 
 }

@@ -92,6 +92,7 @@ public class ListenServiceImpl implements ListenService {
         try{
             jobChildrenCache.start();
             jobChildrenCache.listenable().addListener(watchJobsListener);
+            log.info("driverWatchJob success");
         }catch (Exception exception){
             log.error("start jobChildrenCache failed or addListener failed");
         }

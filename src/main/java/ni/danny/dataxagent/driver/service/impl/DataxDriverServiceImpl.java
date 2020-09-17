@@ -56,7 +56,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
             if(driverStat==null){
                 try{
                     zookeeperDriverClient.create().withMode(CreateMode.EPHEMERAL).forPath(DRIVER_PATH,driverInfo().getBytes());
-                    beenWatcher();
+                    beenDriver();
                 }catch (Exception ex){
                     checkFail();
                 }
@@ -76,7 +76,8 @@ public class DataxDriverServiceImpl implements DataxDriverService {
             beenWatcher();
         }
     }
-    private boolean checkDriverIsSelf()throws Exception{
+    @Override
+    public boolean checkDriverIsSelf()throws Exception{
         String driverData = new String(zookeeperDriverClient.getData().forPath(DRIVER_PATH));
         updateDriverName(null,driverData);
         if(driverInfo().equals(driverData)) {

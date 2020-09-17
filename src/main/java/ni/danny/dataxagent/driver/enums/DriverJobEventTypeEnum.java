@@ -15,6 +15,7 @@ package ni.danny.dataxagent.driver.enums;
  *
  */
 public enum DriverJobEventTypeEnum {
+    JOB_SCAN,
     JOB_CREATED,
     JOB_REJECTED,
     JOB_FINISHED,

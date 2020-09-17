@@ -24,11 +24,9 @@ public class ZookeeperConstant {
 
     public static String driverName = null ;
 
-    public final static DelayQueue<ZookeeperEventDTO> driverEventList = new DelayQueue<>();
 
     public final static DelayQueue<ZookeeperEventDTO> executorEventList = new DelayQueue<>();
 
-    public final static ConcurrentSkipListSet<String> onlineExecutorSet = new ConcurrentSkipListSet<>();
 
     /** executor/threadId  **/
     public final static ConcurrentSkipListSet<String> idleExecutorThreadSet = new ConcurrentSkipListSet<>();
@@ -37,7 +35,7 @@ public class ZookeeperConstant {
     public final static ConcurrentSkipListSet<String> waitForExecutorJobTaskSet = new ConcurrentSkipListSet<>();
 
 
-    public static String driverStatus = "INIT";
+
 
     public static String executorStatus = "INIT";
 
@@ -45,16 +43,16 @@ public class ZookeeperConstant {
 
     public static String STATUS_RUNNING = "RUNNING";
 
+    public static String STATUS_SLEEP = "SLEEP";
+
     public static String STATUS_WATCH = "WATCH";
 
-    public static synchronized String updateDriverStatus(String oldStatus,String newStatus){
-        if(oldStatus==null||oldStatus.equals(driverStatus)){
-            driverStatus = newStatus;
-            return driverStatus;
-        }else{
-            return driverStatus;
-        }
+    public static String driverJobEventHandlerStatus = STATUS_RUNNING;
+
+    public static synchronized void updateDriverJobEventHandlerStatus(String newStatus){
+        driverJobEventHandlerStatus = newStatus;
     }
+
 
     public static synchronized String updateExecutorStatus(String oldStatus,String newStatus){
         if(oldStatus==null||oldStatus.equals(executorStatus)){

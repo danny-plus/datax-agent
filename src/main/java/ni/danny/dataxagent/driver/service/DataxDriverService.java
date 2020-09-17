@@ -35,6 +35,12 @@ public interface DataxDriverService {
     void init();
 
     /**
+     * 检查自身是否是当前的DRIVER
+     * @return
+     */
+    boolean checkDriverIsSelf() throws Exception;
+
+    /**
      * 执行器巡检完成回调
      */
     void executorScanSuccessCallback();

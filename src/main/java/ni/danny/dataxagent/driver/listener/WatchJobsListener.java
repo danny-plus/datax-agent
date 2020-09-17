@@ -21,9 +21,19 @@ public class WatchJobsListener implements CuratorCacheListener {
 
     @Override
     public void event(Type type, ChildData oldData, ChildData data) {
-        if(oldData!=null&&oldData.getPath().startsWith(ZookeeperConstant.JOB_LIST_ROOT_PATH)){
+        if(oldData!=null){
+            dispatchEvent(oldData.getPath(),type,oldData,data);
+        }else if(data!=null){
+            dispatchEvent(data.getPath(),type,oldData,data);
+        }else{
+            log.error("unknow event type=[{}],oldData=[{}],data=[{}]",type,oldData,data);
+        }
+    }
+
+    private void dispatchEvent(String path,Type type,ChildData oldData,ChildData data){
+        if(path.startsWith(ZookeeperConstant.JOB_LIST_ROOT_PATH)){
             dataxDriverJobService.dispatchJobEvent(type,oldData,data);
-        }else if(data!=null && data.getPath().startsWith(ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH)){
+        }else if(path.startsWith(ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH)){
             dataxDriverExecutorService.dispatchExecutorEvent(type,oldData,data);
         }else{
             log.error("unknow event type=[{}],oldData=[{}],data=[{}]",type,oldData,data);
