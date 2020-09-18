@@ -5,9 +5,9 @@ import lombok.Data;
 import lombok.Getter;
 
 
-public class DataxAgentCreateJobJsonException extends DataxAgentException {
+public class DataxAgentCreateJobException extends DataxAgentException {
 
-    private DataxAgentCreateJobJsonException(String errType, String errCode, String errMsg, String errDesc) {
+    private DataxAgentCreateJobException(String errType, String errCode, String errMsg, String errDesc) {
         super(errType, errCode, errMsg, errDesc);
     }
 

@@ -1,7 +1,6 @@
 package ni.danny.dataxagent.service.impl;
 
 import com.alibaba.datax.core.Engine;
-import com.alipay.common.tracer.core.async.TracedExecutorService;
 import com.alipay.common.tracer.core.context.trace.SofaTraceContext;
 import com.alipay.common.tracer.core.holder.SofaTraceContextHolder;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
@@ -9,16 +8,17 @@ import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.callback.ExecutorDataxJobCallback;
-import ni.danny.dataxagent.constant.DataxJobConstant;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.dto.DataxDTO;
 import ni.danny.dataxagent.enums.ExecutorTaskStatusEnum;
 import ni.danny.dataxagent.enums.exception.DataxAgentExceptionCodeEnum;
-import ni.danny.dataxagent.exception.DataxAgentCreateJobJsonException;
+import ni.danny.dataxagent.exception.DataxAgentCreateJobException;
 import ni.danny.dataxagent.exception.DataxAgentException;
 import ni.danny.dataxagent.service.DataxAgentService;
 import ni.danny.dataxagent.service.DataxJobSpiltContextService;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.data.Stat;
 import org.joda.time.DateTime;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +47,9 @@ public class DataxAgentServiceImpl implements DataxAgentService {
     @Autowired
     private DataxJobSpiltContextService dataxJobSpiltContextService;
 
+    @Autowired
+    private CuratorFramework zookeeperExecutorClient;
+
     @Override
     public String createDataxJobJsonFile(DataxDTO dataxDTO) throws IOException, DataxAgentException {
        return createDataxJobJsonFile(
@@ -70,7 +73,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
             outputStream.close();
             return fullPath;
         }else{
-            throw DataxAgentCreateJobJsonException.create(DataxAgentExceptionCodeEnum.JSON_EMPTY,"taskName =["+taskName+"] json is empty");
+            throw DataxAgentCreateJobException.create(DataxAgentExceptionCodeEnum.JSON_EMPTY,"taskName =["+taskName+"] json is empty");
         }
     }
 
@@ -158,5 +161,19 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.put("DATAX-JOBID",jobId);
         MDC.put("DATAX-TASKID",taskId+"");
         log.info("DISPATCH-TASK-[{}]-[{}]",executor,thread);
+    }
+
+    @Override
+    public void createJob(DataxDTO dto)throws Exception {
+        Stat jobStat = zookeeperExecutorClient.checkExists().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH
+                +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId());
+        if(jobStat!=null){
+            throw DataxAgentCreateJobException.create(DataxAgentExceptionCodeEnum.REPEAT_JOB,dto.getJobId());
+        }
+
+        String dataxJson = gson.toJson(dto);
+        zookeeperExecutorClient.create().withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                .forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH
+                +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId(),dataxJson.getBytes());
     }
 }

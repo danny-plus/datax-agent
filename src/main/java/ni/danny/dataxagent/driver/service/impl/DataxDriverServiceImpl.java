@@ -140,11 +140,6 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     }
 
     @Override
-    public DataxDTO createJob(DataxDTO dataxDTO) {
-        return null;
-    }
-
-    @Override
     public void dispatchTask() {
         JobTaskDTO taskDTO =  ZookeeperConstant.pollWaitExecuteTask();
         ExecutorThreadDTO threadDTO = ZookeeperConstant.pollIdleThread();

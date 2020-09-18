@@ -44,11 +44,6 @@ public interface DataxDriverService {
 
 
 
-    /**
-     * 新任务创建，提供给controller层的方法
-     */
-    DataxDTO createJob(DataxDTO dataxDTO);
-
     void dispatchTask();
 
     void addWaitExecuteTask(JobTaskDTO taskDTO);
