@@ -112,7 +112,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
             rejectTask(dto);
         }
         log.info("new dispatch job arrive ,executorThreadNum===>[{}]",DataxJobConstant.executorThreadNum.get());
-        if(DataxJobConstant.executorThreadNum.incrementAndGet()<=maxPoolSize){
+        if(DataxJobConstant.executorThreadNum.getAndIncrement()<=maxPoolSize){
 
             sofaTracerSpan.setBaggageItem("DATAX-JOBID",dto.getJobId());
             sofaTracerSpan.setBaggageItem("DATAX-TASKID",dto.getTaskId());
