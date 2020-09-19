@@ -34,7 +34,7 @@ public class WatchJobsListener implements CuratorCacheListener {
         if(path.startsWith(ZookeeperConstant.JOB_LIST_ROOT_PATH)){
             dataxDriverJobService.dispatchJobEvent(type,oldData,data);
         }else if(path.startsWith(ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH)){
-            dataxDriverExecutorService.dispatchExecutorEvent(type,oldData,data);
+            dataxDriverExecutorService.dispatchJobExecutorEvent(type,oldData,data);
         }else{
             log.error("unknow event type=[{}],oldData=[{}],data=[{}]",type,oldData,data);
         }

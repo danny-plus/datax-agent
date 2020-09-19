@@ -5,24 +5,25 @@ import ni.danny.dataxagent.config.AppInfoComp;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.driver.dto.ExecutorThreadDTO;
 import ni.danny.dataxagent.driver.dto.JobTaskDTO;
+import ni.danny.dataxagent.driver.dto.event.DriverEventDTO;
+import ni.danny.dataxagent.driver.dto.event.DriverExecutorEventDTO;
 import ni.danny.dataxagent.driver.dto.event.DriverJobEventDTO;
 import ni.danny.dataxagent.driver.enums.DriverJobEventTypeEnum;
+import ni.danny.dataxagent.driver.producer.DriverEventProducerWithTranslator;
+import ni.danny.dataxagent.driver.producer.DriverExecutorEventProducerWithTranslator;
 import ni.danny.dataxagent.driver.producer.DriverJobEventProducerWithTranslator;
 import ni.danny.dataxagent.driver.service.DataxDriverExecutorService;
 import ni.danny.dataxagent.driver.service.DataxDriverJobService;
 import ni.danny.dataxagent.driver.service.DataxDriverService;
-import ni.danny.dataxagent.dto.DataxDTO;
 import ni.danny.dataxagent.enums.ExecutorTaskStatusEnum;
 import ni.danny.dataxagent.service.DataxAgentService;
-import ni.danny.dataxagent.service.ListenService;
+import ni.danny.dataxagent.driver.service.DriverListenService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.HashSet;
-import java.util.Set;
 
 import static ni.danny.dataxagent.constant.ZookeeperConstant.*;
 
@@ -39,10 +40,13 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     private DriverJobEventProducerWithTranslator driverJobEventProducerWithTranslator;
 
     @Autowired
+    private DriverExecutorEventProducerWithTranslator driverExecutorEventProducerWithTranslator;
+
+    @Autowired
     private CuratorFramework zookeeperDriverClient;
 
     @Autowired
-    private ListenService listenService;
+    private DriverListenService listenService;
 
     @Autowired
     private DataxDriverJobService dataxDriverJobService;
@@ -52,6 +56,9 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Autowired
     private DataxAgentService dataxAgentService;
+
+    @Autowired
+    private DriverEventProducerWithTranslator driverEventProducerWithTranslator;
 
 
     private String driverInfo(){
@@ -122,7 +129,8 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     public void listen() {
         listenService.driverWatchExecutor();
         listenService.driverWatchJob();
-        listenService.driverWatchKafkaMsg();
+        //TODO 暂时不开启KAFKA任务监听
+        //listenService.driverWatchKafkaMsg();
     }
 
     @Override
@@ -134,44 +142,54 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Override
     public void init() {
-        DataxDriverService service = this;
         dataxDriverJobService.scanJob();
         dataxDriverExecutorService.scanExecutor();
     }
 
+    @Async("driverDispatchTaskThreadExecutor")
     @Override
-    public void dispatchTask() {
-        JobTaskDTO taskDTO =  ZookeeperConstant.pollWaitExecuteTask();
-        ExecutorThreadDTO threadDTO = ZookeeperConstant.pollIdleThread();
+    public  void dispatchTask(DriverEventDTO dto) {
+        log.info("try to dispatch the task ");
+        JobTaskDTO taskDTO = null;
+        ExecutorThreadDTO threadDTO = null;
+
+        synchronized (this){
+            taskDTO =  ZookeeperConstant.waitForExecuteTaskSet.pollFirst();
+
+            threadDTO = ZookeeperConstant.idleThreadSet.pollFirst();
+            log.info("taskDTO = [{}], threadDTO = [{}]",taskDTO,threadDTO);
+        }
+
         if(taskDTO!=null&&threadDTO!=null){
             try{
                 String taskThreadPath = ZookeeperConstant.JOB_LIST_ROOT_PATH+ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG
                         +taskDTO.getJobId()+ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+taskDTO.getTaskId()
                         +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+threadDTO.getExecutor()
                         +ZookeeperConstant.JOB_TASK_SPLIT_TAG+threadDTO.getThread();
-                zookeeperDriverClient.create().withTtl(15*60*1000).withMode(CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL)
+                zookeeperDriverClient.create().withMode(CreateMode.PERSISTENT)
                         .forPath(taskThreadPath, ExecutorTaskStatusEnum.INIT.getValue().getBytes());
 
                 String threadTaskPath = ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH+ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG
                         +threadDTO.getExecutor()+ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+threadDTO.getThread()
                         +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+taskDTO.getJobId()+ZookeeperConstant.JOB_TASK_SPLIT_TAG
                         +taskDTO.getTaskId();
-                zookeeperDriverClient.create().withTtl(15*60*1000).withMode(CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL)
+                zookeeperDriverClient.create().withMode(CreateMode.PERSISTENT)
                         .forPath(threadTaskPath,ExecutorTaskStatusEnum.INIT.getValue().getBytes());
                 dataxAgentService.dispatchTask(taskDTO.getJobId(),taskDTO.getTaskId(),threadDTO.getExecutor(),threadDTO.getThread());
 
-                dispatchEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH,null,0
-                        ,null,null,5*1000));
+                driverEventProducerWithTranslator.onData(dto.delay(5*1000));
             }catch (Exception ex) {
-                addWaitExecuteTask(taskDTO);
-                addIdleThread(threadDTO);
-                dispatchEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH,null,0
-                        ,null,null,5*1000));
+                synchronized (this){
+                    addWaitExecuteTask(taskDTO);
+                    addIdleThread(threadDTO);
+                }
             }
         }else if(taskDTO!=null){
+            driverEventProducerWithTranslator.onData(dto.updateRetry());
             addWaitExecuteTask(taskDTO);
 
         }else if(threadDTO!=null){
+            driverEventProducerWithTranslator.onData(dto.updateRetry());
             addIdleThread(threadDTO);
         }
     }
@@ -180,22 +198,37 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Override
     public void addWaitExecuteTask(JobTaskDTO taskDTO){
-        Set tmpTaskSet = new HashSet<JobTaskDTO>();
-        tmpTaskSet.add(taskDTO);
-        ZookeeperConstant.addWaitExecuteTask(tmpTaskSet);
+        boolean insertResult = ZookeeperConstant.waitForExecuteTaskSet.add(taskDTO);
+        log.debug("ZookeeperConstant.waitForExecuteTaskSet size = [{}] ,insertResult = [{}]",ZookeeperConstant.waitForExecuteTaskSet.size(),insertResult);
+
     }
 
     @Override
     public void addIdleThread(ExecutorThreadDTO threadDTO){
-        Set tmpThreadSet = new HashSet<ExecutorThreadDTO>();
-        tmpThreadSet.add(threadDTO);
-        ZookeeperConstant.addIdleThread(tmpThreadSet);
+        boolean insertResult = ZookeeperConstant.idleThreadSet.add(threadDTO);
+        log.debug("ZookeeperConstant.idleThreadSet size = [{}] ,insertResult = [{}]",ZookeeperConstant.idleThreadSet.size(),insertResult);
     }
 
-    private void dispatchEvent(DriverJobEventDTO dto) {
+    @Override
+    public void dispatchJobEvent(DriverJobEventDTO dto) {
         if(dto.getRetryNum()<10){
             dto.updateRetry();
             driverJobEventProducerWithTranslator.onData(dto);
+        }
+    }
+
+    @Override
+    public void dispatchExecutorEvent(DriverExecutorEventDTO dto) {
+        if(dto.getRetryNum()<10){
+            dto.updateRetry();
+            driverExecutorEventProducerWithTranslator.onData(dto);
+        }
+    }
+
+    @Override
+    public void dispatchEvent(DriverEventDTO dto) {
+        if(dto.getRetryNum()<10){
+            driverEventProducerWithTranslator.onData(dto.updateRetry());
         }
     }
 }

@@ -2,6 +2,9 @@ package ni.danny.dataxagent.driver.service;
 
 import ni.danny.dataxagent.driver.dto.ExecutorThreadDTO;
 import ni.danny.dataxagent.driver.dto.JobTaskDTO;
+import ni.danny.dataxagent.driver.dto.event.DriverEventDTO;
+import ni.danny.dataxagent.driver.dto.event.DriverExecutorEventDTO;
+import ni.danny.dataxagent.driver.dto.event.DriverJobEventDTO;
 import ni.danny.dataxagent.dto.DataxDTO;
 
 public interface DataxDriverService {
@@ -44,11 +47,16 @@ public interface DataxDriverService {
 
 
 
-    void dispatchTask();
+    void dispatchTask(DriverEventDTO dto);
 
     void addWaitExecuteTask(JobTaskDTO taskDTO);
 
     void addIdleThread(ExecutorThreadDTO threadDTO);
 
+    void dispatchJobEvent(DriverJobEventDTO dto);
+
+    void dispatchExecutorEvent(DriverExecutorEventDTO dto);
+
+    void dispatchEvent(DriverEventDTO dto);
 
 }

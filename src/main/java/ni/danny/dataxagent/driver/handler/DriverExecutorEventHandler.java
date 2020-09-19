@@ -6,6 +6,7 @@ import ni.danny.dataxagent.driver.dto.event.DriverExecutorEvent;
 import ni.danny.dataxagent.driver.service.DataxDriverExecutorService;
 import ni.danny.dataxagent.driver.service.DataxDriverService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 public class DriverExecutorEventHandler implements EventHandler<DriverExecutorEvent> {
 
@@ -13,6 +14,7 @@ public class DriverExecutorEventHandler implements EventHandler<DriverExecutorEv
     private DataxDriverExecutorService dataxDriverExecutorService;
 
     @Autowired
+    @Lazy
     private DataxDriverService dataxDriverService;
 
     @Override
@@ -23,7 +25,7 @@ public class DriverExecutorEventHandler implements EventHandler<DriverExecutorEv
             return;
         }
         if(event.getDto().getDelayTime()>System.currentTimeMillis()){
-            dataxDriverExecutorService.dispatchEvent(event.getDto());
+            dataxDriverService.dispatchExecutorEvent(event.getDto());
             event.clear();
             return;
         }

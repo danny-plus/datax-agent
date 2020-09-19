@@ -4,8 +4,10 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.driver.dto.ExecutorThreadDTO;
+import ni.danny.dataxagent.driver.dto.event.DriverEventDTO;
 import ni.danny.dataxagent.driver.dto.event.DriverExecutorEventDTO;
 import ni.danny.dataxagent.driver.enums.DriverExecutorEventTypeEnum;
+import ni.danny.dataxagent.driver.enums.DriverJobEventTypeEnum;
 import ni.danny.dataxagent.driver.enums.ExecutorThreadStatusEnums;
 import ni.danny.dataxagent.driver.producer.DriverExecutorEventProducerWithTranslator;
 import ni.danny.dataxagent.driver.service.DataxDriverExecutorService;
@@ -19,6 +21,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -33,25 +36,19 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
     @Autowired
     private CuratorFramework zookeeperDriverClient;
 
-    @Autowired
-    private DataxAgentService dataxAgentService;
 
     @Autowired
+    @Lazy
     private DataxDriverService dataxDriverService;
-
-    @Autowired
-    private DriverExecutorEventProducerWithTranslator driverExecutorEventProducerWithTranslator;
 
     @Value("${datax.executor.pool.maxPoolSize}")
     private int executorMaxPoolSize;
 
-    @Autowired
-    private Gson gson;
 
     @Override
     public void scanExecutor() {
         ZookeeperConstant.updateDriverExecutorEventHandlerStatus(ZookeeperConstant.STATUS_SLEEP);
-        ZookeeperConstant.clearIdleThread();
+        ZookeeperConstant.idleThreadSet.clear();
         Set<ExecutorThreadDTO> tmpSet = new HashSet<>();
         try{
             List<String> list = zookeeperDriverClient.getChildren().forPath(ZookeeperConstant.EXECUTOR_ROOT_PATH);
@@ -87,10 +84,10 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
 
             }
 
-            ZookeeperConstant.addIdleThread(tmpSet);
-            dataxDriverService.dispatchTask();
+            ZookeeperConstant.idleThreadSet.addAll(tmpSet);
+            dataxDriverService.dispatchEvent(new DriverEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH));
         }catch (Exception ex){
-            dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.EXECUTOR_SCAN,null,0,null));
+            dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.EXECUTOR_SCAN,null,0,null));
         }
         finally {
             ZookeeperConstant.updateDriverExecutorEventHandlerStatus(ZookeeperConstant.STATUS_RUNNING);
@@ -99,44 +96,69 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
     }
 
     @Override
-    public void dispatchExecutorEvent(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
+    public void dispatchJobExecutorEvent(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
         String[] pathInfo = null;
+        String pathStr = "";
         if(data!=null){
-            pathInfo =data.getPath().split(ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG);
+            pathStr = data.getPath();
         }else if(oldData != null){
-            pathInfo =oldData.getPath().split(ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG);
+            pathStr = oldData.getPath();
         }
+        pathInfo =pathStr.split(ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG);
+        log.debug("type==[{}], pathInfo ==[{}]",type,pathStr);
         switch (type.toString()){
             case "NODE_CREATED":
-                if(pathInfo.length==2){
-                    dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.EXECUTOR_UP,pathInfo[1],0,null));
-                }else if(pathInfo.length==4){
-                    //dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_CREATED,pathInfo[2],Integer.parseInt(pathInfo[3]),null) );
-                }else if(pathInfo.length==5){
-                    dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_TASK_CREATED,pathInfo[2],Integer.parseInt(pathInfo[3]),pathInfo[4]));
+                if(pathInfo.length==5){
+                    //dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_CREATED,pathInfo[3],Integer.parseInt(pathInfo[4]),null));
+                }else if(pathInfo.length==6){
+                    dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_TASK_CREATED,pathInfo[3],Integer.parseInt(pathInfo[4]),pathInfo[5]));
                 }
                 break;
             case "NODE_CHANGED":
-                if(pathInfo.length==4){
+                if(pathInfo.length==5){
                     if(ExecutorThreadStatusEnums.WAITRECYCLE.toString().equals(new String(data.getData()))){
-                        dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_WAITRECYCLE
-                                ,pathInfo[2],Integer.parseInt(pathInfo[3]),null) );
+                        dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_WAITRECYCLE
+                                ,pathInfo[3],Integer.parseInt(pathInfo[4]),null) );
                     }else if(ExecutorThreadStatusEnums.READY.toString().equals(new String(data.getData()))){
-                        dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_READY
-                                ,pathInfo[2],Integer.parseInt(pathInfo[3]),null) );
+                        dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_READY
+                                ,pathInfo[3],Integer.parseInt(pathInfo[4]),null) );
                     }
-                }else if(pathInfo.length==5){
-                    dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_TASK_SET_TRACEID
-                            ,pathInfo[2],Integer.parseInt(pathInfo[3]),pathInfo[4]) );
+                }else if(pathInfo.length==6){
+                    dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_TASK_SET_TRACEID
+                            ,pathInfo[3],Integer.parseInt(pathInfo[4]),pathInfo[5]) );
                 }
                 break;
             case "NODE_DELETED":
-                if(pathInfo.length==2){
-                    dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.EXECUTOR_DOWN,pathInfo[1],0,null));
-                }else if(pathInfo.length==4){
-                    dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_REMOVED,pathInfo[2],Integer.parseInt(pathInfo[3]),null) );
-                }else if(pathInfo.length==5){
-                    dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_TASK_REMOVED,pathInfo[2],Integer.parseInt(pathInfo[3]),pathInfo[4]));
+                if(pathInfo.length==5){
+                    dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_REMOVED,pathInfo[3],Integer.parseInt(pathInfo[4]),null) );
+                }else if(pathInfo.length==6){
+                    dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_TASK_REMOVED,pathInfo[3],Integer.parseInt(pathInfo[4]),pathInfo[5]));
+                }
+                break;
+            default:break;
+        }
+    }
+
+    @Override
+    public void dispatchExecutorEvent(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
+        String pathStr = "";
+        String[] pathInfo = null;
+        if(data!=null){
+            pathStr = data.getPath();
+        }else if(oldData != null){
+            pathStr = oldData.getPath();
+        }
+        pathInfo = pathStr.split(ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG);
+        log.debug("type==[{}], pathInfo ==[{}]",type,pathStr);
+        switch (type.toString()){
+            case "NODE_CREATED":
+                if(pathInfo.length==3){
+                    dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.EXECUTOR_UP,pathInfo[2],0,null));
+                }
+                break;
+            case "NODE_DELETED":
+                if(pathInfo.length==3){
+                    dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.EXECUTOR_DOWN,pathInfo[2],0,null));
                 }
                 break;
             default:break;
@@ -157,7 +179,7 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
                 for(int i=0;i<executorMaxPoolSize;i++){
                     Stat threadStat = zookeeperDriverClient.checkExists().forPath(jobExecutor+ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+i);
                     if(threadStat==null){
-                        zookeeperDriverClient.create().withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                        zookeeperDriverClient.create().withMode(CreateMode.PERSISTENT)
                                 .forPath(jobExecutor+ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+i,ExecutorThreadStatusEnums.READY.toString().getBytes());
                     }else{
                         zookeeperDriverClient.setData()
@@ -166,11 +188,11 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
                     list.add(new ExecutorThreadDTO(eventDTO.getExecutor(),i));
                 }
                 for(ExecutorThreadDTO dto:list){
-                    dispatchEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_CREATED,dto.getExecutor(),dto.getThread(),null) );
+                    dataxDriverService.dispatchExecutorEvent(new DriverExecutorEventDTO(DriverExecutorEventTypeEnum.THREAD_CREATED,dto.getExecutor(),dto.getThread(),null) );
                 }
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchExecutorEvent(eventDTO);
         }
     }
 
@@ -202,14 +224,15 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
             }
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchExecutorEvent(eventDTO);
         }
     }
 
     @Override
     public void threadCreatedEvent(DriverExecutorEventDTO eventDTO) {
+        log.info("====> thread created [{}]",eventDTO);
         dataxDriverService.addIdleThread(new ExecutorThreadDTO(eventDTO.getExecutor(),eventDTO.getThread()));
-        dataxDriverService.dispatchTask();
+        //dataxDriverService.dispatchTask(new DriverEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH));
     }
 
     @Override
@@ -234,7 +257,7 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
             }
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchExecutorEvent(eventDTO);
         }
     }
 
@@ -271,11 +294,11 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
                     +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+eventDTO.getThread());
             if(tasks==null||tasks.isEmpty()){
                 dataxDriverService.addIdleThread(new ExecutorThreadDTO(eventDTO.getExecutor(),eventDTO.getThread()));
-                dataxDriverService.dispatchTask();
+                dataxDriverService.dispatchEvent(new DriverEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH));
             }
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchExecutorEvent(eventDTO);
         }
     }
 
@@ -290,7 +313,7 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
             }
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchExecutorEvent(eventDTO);
         }
     }
 
@@ -326,7 +349,7 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
                         +ZookeeperConstant.JOB_TASK_SPLIT_TAG+eventDTO.getThread());
                 if(taskThreadStat==null){
                     dataxDriverService.addIdleThread(new ExecutorThreadDTO(eventDTO.getExecutor(),eventDTO.getThread()));
-                    dataxDriverService.dispatchTask();
+                    dataxDriverService.dispatchEvent(new DriverEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH));
                     return;
                 }
 
@@ -338,22 +361,13 @@ public class DataxDriverExecutorServiceImpl implements DataxDriverExecutorServic
 
                 if(ExecutorTaskStatusEnum.REJECT.getValue().equals(taskThreadStatus)||ExecutorTaskStatusEnum.FINISH.getValue().equals(taskThreadStatus)){
                     dataxDriverService.addIdleThread(new ExecutorThreadDTO(eventDTO.getExecutor(),eventDTO.getThread()));
-                    dataxDriverService.dispatchTask();
+                    dataxDriverService.dispatchEvent(new DriverEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH));
                 }
             }
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchExecutorEvent(eventDTO);
         }
     }
-
-    @Override
-    public void dispatchEvent(DriverExecutorEventDTO eventDTO) {
-        if(eventDTO.getRetryNum()<10){
-            eventDTO.updateRetry();
-            driverExecutorEventProducerWithTranslator.onData(eventDTO);
-        }
-    }
-
 
 }

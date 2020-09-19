@@ -1,6 +1,5 @@
 package ni.danny.dataxagent.driver.service;
 
-import ni.danny.dataxagent.callback.DriverCallback;
 import ni.danny.dataxagent.driver.dto.event.DriverJobEventDTO;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
@@ -98,6 +97,5 @@ public interface DataxDriverJobService {
     void taskThreadFinishedEvent(DriverJobEventDTO eventDTO);
 
 
-    void dispatchEvent(DriverJobEventDTO dto);
 
 }

@@ -8,6 +8,7 @@ import ni.danny.dataxagent.driver.producer.DriverJobEventProducerWithTranslator;
 import ni.danny.dataxagent.driver.service.DataxDriverJobService;
 import ni.danny.dataxagent.driver.service.DataxDriverService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 @Slf4j
 public class DriverJobEventHandler implements EventHandler<DriverJobEvent> {
@@ -16,6 +17,7 @@ public class DriverJobEventHandler implements EventHandler<DriverJobEvent> {
     private DataxDriverJobService dataxDriverJobService;
 
     @Autowired
+    @Lazy
     private DataxDriverService dataxDriverService;
 
 
@@ -27,7 +29,7 @@ public class DriverJobEventHandler implements EventHandler<DriverJobEvent> {
             return;
         }
         if(event.getDto().getDelayTime()>System.currentTimeMillis()){
-            dataxDriverJobService.dispatchEvent(event.getDto());
+            dataxDriverService.dispatchJobEvent(event.getDto());
             event.clear();
             return;
         }
@@ -46,7 +48,6 @@ public class DriverJobEventHandler implements EventHandler<DriverJobEvent> {
             case "TASK_FINISHED": dataxDriverJobService.taskFinishedEvent(event.getDto());break;
             case "TASK_THREAD_FINISHED": dataxDriverJobService.taskThreadFinishedEvent(event.getDto());break;
             case "TASK_THREAD_REJECTED": dataxDriverJobService.taskThreadRejectedEvent(event.getDto());break;
-            case "TASK_DISPATCH": dataxDriverService.dispatchTask();break;
         }
         event.clear();
     }

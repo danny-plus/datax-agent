@@ -1,8 +1,7 @@
-package ni.danny.dataxagent.service;
+package ni.danny.dataxagent.driver.service;
 
-import org.apache.curator.framework.CuratorFramework;
 
-public interface ListenService {
+public interface DriverListenService {
     /**
      * 监控调度器状态
      */
@@ -30,11 +29,6 @@ public interface ListenService {
     void driverWatchKafkaMsg();
 
     void stopDriverWatchKafkaMsg();
-
-    /**
-     * 执行器监控自身任务[任务新增]
-     */
-    void executorWatchJobExecutor();
 
 
 

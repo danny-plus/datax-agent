@@ -33,6 +33,11 @@ public class DataxAgentController {
             public void finishTask() {
                 log.info("finish task");
             }
+
+            @Override
+            public void throwException(Throwable ex) {
+                log.error(ex.getMessage());
+            }
         });
         SofaTraceContext sofaTraceContext = SofaTraceContextHolder.getSofaTraceContext();
         SofaTracerSpan sofaTracerSpan = sofaTraceContext.getCurrentSpan();

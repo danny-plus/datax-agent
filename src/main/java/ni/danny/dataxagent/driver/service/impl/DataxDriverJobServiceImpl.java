@@ -2,13 +2,12 @@ package ni.danny.dataxagent.driver.service.impl;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import ni.danny.dataxagent.callback.DriverCallback;
 import ni.danny.dataxagent.constant.DataxJobConstant;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.driver.dto.JobTaskDTO;
+import ni.danny.dataxagent.driver.dto.event.DriverEventDTO;
 import ni.danny.dataxagent.driver.dto.event.DriverJobEventDTO;
 import ni.danny.dataxagent.driver.enums.DriverJobEventTypeEnum;
-import ni.danny.dataxagent.driver.producer.DriverJobEventProducerWithTranslator;
 import ni.danny.dataxagent.driver.service.DataxDriverJobService;
 import ni.danny.dataxagent.driver.service.DataxDriverService;
 import ni.danny.dataxagent.dto.DataxDTO;
@@ -20,6 +19,7 @@ import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -31,15 +31,13 @@ import java.util.Set;
 public class DataxDriverJobServiceImpl implements DataxDriverJobService {
 
     @Autowired
-    private DriverJobEventProducerWithTranslator driverJobEventProducerWithTranslator;
-
-    @Autowired
     private CuratorFramework zookeeperDriverClient;
 
     @Autowired
     private DataxAgentService dataxAgentService;
 
     @Autowired
+    @Lazy
     private DataxDriverService dataxDriverService;
 
     @Autowired
@@ -48,7 +46,7 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
     @Override
     public void scanJob() {
         ZookeeperConstant.updateDriverJobEventHandlerStatus(ZookeeperConstant.STATUS_SLEEP);
-        ZookeeperConstant.clearWaitExecuteTask();
+        ZookeeperConstant.waitForExecuteTaskSet.clear();
         Set<JobTaskDTO> tmpSet = new HashSet<>();
         try{
             List<String> jobList = zookeeperDriverClient.getChildren().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH);
@@ -63,10 +61,10 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
                     }
                 }
             }
-            ZookeeperConstant.addWaitExecuteTask(tmpSet);
+            ZookeeperConstant.waitForExecuteTaskSet.addAll(tmpSet);
         }catch (Exception ex){
-             driverJobEventProducerWithTranslator.onData(new DriverJobEventDTO(DriverJobEventTypeEnum.JOB_SCAN
-                     ,null,0,null,null,2*1000) );
+            dataxDriverService.dispatchJobEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.JOB_SCAN
+                    ,null,0,null,null,2*1000));
 
         }finally {
             ZookeeperConstant.updateDriverJobEventHandlerStatus(ZookeeperConstant.STATUS_RUNNING);
@@ -75,17 +73,19 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
 
     @Override
     public void dispatchJobEvent(CuratorCacheListener.Type type, ChildData oldData, ChildData data) {
+        String pathStr = "";
         String[] pathInfo = null;
         if(data!=null){
-            pathInfo =data.getPath().split(ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG);
+            pathStr =data.getPath();
         }else if(oldData != null){
-            pathInfo =oldData.getPath().split(ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG);
+            pathStr =oldData.getPath();
         }
-     //   log.info("type=[{}],data=[{}]",type,pathInfo);
+        pathInfo = pathStr.split(ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG);
+        log.debug("type=[{}],data=[{}]",type,pathStr);
         switch (type.toString()){
             case "NODE_CREATED":
                 if(pathInfo.length==4){
-                    driverJobEventProducerWithTranslator.onData(new DriverJobEventDTO(DriverJobEventTypeEnum.JOB_CREATED
+                    dataxDriverService.dispatchJobEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.JOB_CREATED
                             ,pathInfo[3],0,null,new String(data.getData())));
                 }else if(pathInfo.length==5){
                     //不由ZOOKEEPER触发事件
@@ -96,26 +96,26 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
             case "NODE_CHANGED":
                 if(pathInfo.length==4){
                     if(DataxJobConstant.JOB_FINISH.equals(new String(data.getData()))){
-                        driverJobEventProducerWithTranslator.onData(new DriverJobEventDTO(DriverJobEventTypeEnum.JOB_FINISHED
+                        dataxDriverService.dispatchJobEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.JOB_FINISHED
                                 ,pathInfo[3],0,null,null));
                     }else if(DataxJobConstant.JOB_REJECT.equals(new String(data.getData()))){
-                        driverJobEventProducerWithTranslator.onData(new DriverJobEventDTO(DriverJobEventTypeEnum.JOB_REJECTED
+                        dataxDriverService.dispatchJobEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.JOB_REJECTED
                                 ,pathInfo[3],0,null,null));
                     }
                 }else if(pathInfo.length==5){
                     if(DataxJobConstant.TASK_FINISH.equals(new String(data.getData()))){
-                        driverJobEventProducerWithTranslator.onData(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_FINISHED
+                        dataxDriverService.dispatchJobEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_FINISHED
                                 ,pathInfo[3],Integer.parseInt(pathInfo[4]),null,null));
                     }else if(DataxJobConstant.TASK_REJECT.equals(new String(data.getData()))){
-                        driverJobEventProducerWithTranslator.onData(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_REJECTED
+                        dataxDriverService.dispatchJobEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_REJECTED
                                 ,pathInfo[3],Integer.parseInt(pathInfo[4]),null,null));
                     }
                 }else if(pathInfo.length==6){
                     if(DataxJobConstant.TASK_FINISH.equals(new String(data.getData()))){
-                        driverJobEventProducerWithTranslator.onData(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_THREAD_FINISHED
+                        dataxDriverService.dispatchJobEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_THREAD_FINISHED
                                 ,pathInfo[3],Integer.parseInt(pathInfo[4]),pathInfo[5],null));
                     }else if(DataxJobConstant.TASK_REJECT.equals(new String(data.getData()))){
-                        driverJobEventProducerWithTranslator.onData(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_THREAD_REJECTED
+                        dataxDriverService.dispatchJobEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_THREAD_REJECTED
                                 ,pathInfo[3],Integer.parseInt(pathInfo[4]),pathInfo[5],null));
                     }
                 }
@@ -151,16 +151,16 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
                     }
                 }
                 if(createTaskFlag){
-                    zookeeperDriverClient.create().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath(taskPath,gson.toJson(taskDto).getBytes());
+                    zookeeperDriverClient.create().withMode(CreateMode.PERSISTENT).forPath(taskPath,gson.toJson(taskDto).getBytes());
                 }
             }
             for(DataxDTO taskDto:taskList){
-                driverJobEventProducerWithTranslator.onData(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_CREATED
+                dataxDriverService.dispatchJobEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.TASK_CREATED
                         ,taskDto.getJobId(),taskDto.getTaskId(),null,gson.toJson(taskDto)));
             }
         }catch (Exception exception){
 
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchJobEvent(eventDTO);
         }
     }
 
@@ -173,7 +173,7 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
                     ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+eventDTO.getJobId());
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchJobEvent(eventDTO);
         }
     }
 
@@ -185,14 +185,14 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
                     ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+eventDTO.getJobId());
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchJobEvent(eventDTO);
         }
     }
 
     @Override
     public void taskCreatedEvent(DriverJobEventDTO eventDTO) {
         dataxDriverService.addWaitExecuteTask(new JobTaskDTO(eventDTO.getJobId(),eventDTO.getTaskId()));
-        dataxDriverService.dispatchTask();
+        dataxDriverService.dispatchEvent(new DriverEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH).delay(300));
     }
 
     @Override
@@ -217,7 +217,7 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
             }
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchJobEvent(eventDTO);
         }
     }
 
@@ -244,7 +244,7 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
             }
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchJobEvent(eventDTO);
         }
     }
 
@@ -274,7 +274,7 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
             }
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchJobEvent(eventDTO);
         }
 
     }
@@ -288,17 +288,9 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
                     ,ExecutorTaskStatusEnum.FINISH.getValue().getBytes());
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
-            dispatchEvent(eventDTO);
+            dataxDriverService.dispatchJobEvent(eventDTO);
         }
     }
 
 
-
-    @Override
-    public void dispatchEvent(DriverJobEventDTO dto) {
-        if(dto.getRetryNum()<10){
-            dto.updateRetry();
-            driverJobEventProducerWithTranslator.onData(dto);
-        }
-    }
 }

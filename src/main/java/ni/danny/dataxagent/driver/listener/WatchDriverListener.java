@@ -5,6 +5,7 @@ import ni.danny.dataxagent.driver.service.DataxDriverService;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Random;
@@ -14,6 +15,7 @@ import java.util.Random;
 public class WatchDriverListener implements CuratorCacheListener {
 
     @Autowired
+    @Lazy
     private DataxDriverService dataxDriverService;
 
     @Override

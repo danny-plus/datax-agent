@@ -79,7 +79,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
 
     @Override
     @Async("agentExecutor")
-    public void asyncExecuteDataxJob(String jobId, int taskId, String jobJsonFilePath, ExecutorDataxJobCallback callback) throws Throwable {
+    public void asyncExecuteDataxJob(String jobId, int taskId, String jobJsonFilePath, ExecutorDataxJobCallback callback) {
         SofaTraceContext sofaTraceContext = SofaTraceContextHolder.getSofaTraceContext();
         SofaTracerSpan sofaTracerSpan = sofaTraceContext.getCurrentSpan();
         sofaTracerSpan.setBaggageItem("DATAX-JOBID",jobId);
@@ -96,8 +96,12 @@ public class DataxAgentServiceImpl implements DataxAgentService {
 
         String[] dataxArgs = {"-job",jobJsonFilePath,"-mode","standalone"
                 ,"-jobid",taskId+""};
+        try{
+            Engine.entry(dataxArgs);
+        }catch (Throwable e){
+            callback.throwException(e);
+        }
 
-        Engine.entry(dataxArgs);
 
         MDC.remove("DATAX-STATUS");
         MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.FINISH.getValue());
@@ -165,6 +169,10 @@ public class DataxAgentServiceImpl implements DataxAgentService {
 
     @Override
     public void createJob(DataxDTO dto)throws Exception {
+        String jobId = dto.getJobId();
+        if(jobId.contains(ZookeeperConstant.JOB_TASK_SPLIT_TAG)){
+            throw DataxAgentCreateJobException.create(DataxAgentExceptionCodeEnum.JOBID_CONTAINS_DASH,dto.getJobId());
+        }
         Stat jobStat = zookeeperExecutorClient.checkExists().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH
                 +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId());
         if(jobStat!=null){
@@ -172,7 +180,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         }
 
         String dataxJson = gson.toJson(dto);
-        zookeeperExecutorClient.create().withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+        zookeeperExecutorClient.create().withMode(CreateMode.PERSISTENT)
                 .forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH
                 +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId(),dataxJson.getBytes());
     }

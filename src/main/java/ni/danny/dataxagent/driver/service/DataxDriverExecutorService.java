@@ -1,6 +1,5 @@
 package ni.danny.dataxagent.driver.service;
 
-import ni.danny.dataxagent.callback.DriverCallback;
 import ni.danny.dataxagent.driver.dto.event.DriverExecutorEventDTO;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
@@ -42,6 +41,8 @@ public interface DataxDriverExecutorService {
      * 执行器事件分发器
      */
     void dispatchExecutorEvent(CuratorCacheListener.Type type, ChildData oldData, ChildData data);
+
+    void dispatchJobExecutorEvent(CuratorCacheListener.Type type, ChildData oldData, ChildData data);
 
     /**
      * 执行器节点创建事件【上线】
@@ -116,10 +117,6 @@ public interface DataxDriverExecutorService {
      * @param eventDTO
      */
     void threadTaskRemovedEvent(DriverExecutorEventDTO eventDTO);
-
-
-    void dispatchEvent(DriverExecutorEventDTO eventDTO);
-
 
 
 }

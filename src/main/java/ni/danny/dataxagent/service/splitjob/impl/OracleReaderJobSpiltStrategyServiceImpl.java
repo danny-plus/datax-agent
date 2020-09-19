@@ -25,7 +25,8 @@ public class OracleReaderJobSpiltStrategyServiceImpl implements OracleReaderJobS
 
     @Override
     public List<DataxDTO> spiltDataxJob(String jobId, DataxDTO dataxDTO) {
-        OracleReaderSplitStrategyDTO splitStrategyDTO = (OracleReaderSplitStrategyDTO)dataxDTO.getSplitStrategy().getStrategy();
+        String splitStrategyJson = gson.toJson(dataxDTO.getSplitStrategy().getStrategy());
+        OracleReaderSplitStrategyDTO splitStrategyDTO = gson.fromJson(splitStrategyJson,OracleReaderSplitStrategyDTO.class);
         String[][] splits = splitStrategyDTO.getSplits();
         List<DataxDTO> newDataxList = new ArrayList<>(splits.length);
         String column = splitStrategyDTO.getColumn();
@@ -36,7 +37,8 @@ public class OracleReaderJobSpiltStrategyServiceImpl implements OracleReaderJobS
              ContentDTO[] newContents = new ContentDTO[contents.length];
              for(int k=0,y=contents.length;k<y;k++){
                 ContentDTO content = contents[k];
-                 OracleReaderDTO readerDTO =(OracleReaderDTO) content.getReader();
+                String readerJson = gson.toJson(content.getReader());
+                 OracleReaderDTO readerDTO =gson.fromJson(readerJson,OracleReaderDTO.class) ;
                  ConnectionDTO[] connections = readerDTO.getParameter().getConnection();
                  ConnectionDTO[] newConnections = new ConnectionDTO[connections.length];
                  for(int j=0,x=connections.length;j<x;j++){
@@ -47,8 +49,8 @@ public class OracleReaderJobSpiltStrategyServiceImpl implements OracleReaderJobS
                          String querySql = querySqls[i];
                          StringBuilder newSql = new StringBuilder();
                          newSql.append(querySql);
-                         if(querySql.toUpperCase().contains("WHERE")){
-                             newSql.append(" WHERE "+column+" >= '"+split[0]+"' and "+column+" < '"+split[1]+"' ");
+                         if(!querySql.toUpperCase().contains("WHERE")){
+                             newSql.append(" WHERE "+column+" >= '"+split[0]+"' AND "+column+" < '"+split[1]+"' ");
                          }else {
                              newSql.append(" AND "+column+" >= '"+split[0]+"' AND "+column+" < '"+split[1]+"' ");
                          }

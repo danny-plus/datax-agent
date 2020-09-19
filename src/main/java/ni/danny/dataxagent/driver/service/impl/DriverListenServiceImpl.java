@@ -1,31 +1,20 @@
-package ni.danny.dataxagent.service.impl;
+package ni.danny.dataxagent.driver.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import ni.danny.dataxagent.config.AppInfoComp;
-import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.driver.listener.WatchDriverListener;
 import ni.danny.dataxagent.driver.listener.WatchExecutorsListener;
 import ni.danny.dataxagent.driver.listener.WatchJobsListener;
 import ni.danny.dataxagent.kafka.DataxLogConsumer;
-import ni.danny.dataxagent.driver.service.DataxDriverService;
-import ni.danny.dataxagent.service.DataxExecutorService;
-import ni.danny.dataxagent.service.ListenService;
-import org.apache.curator.framework.CuratorFramework;
+import ni.danny.dataxagent.driver.service.DriverListenService;
 import org.apache.curator.framework.recipes.cache.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.Random;
 
 @Slf4j
 @Service
-public class ListenServiceImpl implements ListenService {
+public class DriverListenServiceImpl implements DriverListenService {
 
-    @Autowired
-    private CuratorFramework zookeeperExecutorClient;
-
-    @Autowired
-    private DataxExecutorService dataxExecutorService;
 
     @Autowired
     private WatchDriverListener watchDriverListener;
@@ -35,10 +24,6 @@ public class ListenServiceImpl implements ListenService {
 
     @Autowired
     private WatchJobsListener watchJobsListener;
-
-
-    @Autowired
-    private AppInfoComp appInfoComp;
 
     @Autowired
     private DataxLogConsumer dataxLogConsumer;
@@ -102,23 +87,6 @@ public class ListenServiceImpl implements ListenService {
     @Override
     public void stopDriverWatchJob() {
         jobChildrenCache.listenable().removeListener(watchJobsListener);
-    }
-
-    /**
-     * 任务节点监听是否有工作派给自己
-     */
-    @Override
-    public void executorWatchJobExecutor() {
-        CuratorCache pathChildrenCache =CuratorCache.builder(zookeeperExecutorClient, ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH+"/"+appInfoComp.getHostnameAndPort()).build();
-        try{
-            pathChildrenCache.start();
-        pathChildrenCache.listenable().addListener((type, oldData, data) -> {
-            //log.info("executor watch job executor child change===>"+type+"   "+oldData+"   "+data);
-            dataxExecutorService.process(type,oldData,data);
-        });
-        }catch (Exception exception){
-            exception.printStackTrace();
-        }
     }
 
 

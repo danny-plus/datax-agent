@@ -1,6 +1,7 @@
-package ni.danny.dataxagent.service;
+package ni.danny.dataxagent.executor.service;
 
 import ni.danny.dataxagent.dto.DataxExecutorTaskDTO;
+import ni.danny.dataxagent.executor.dto.event.ExecutorEventDTO;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 
@@ -40,5 +41,7 @@ public interface DataxExecutorService {
      * 事件分发处理
      */
     void process(CuratorCacheListener.Type type, ChildData oldData, ChildData data);
+
+    void dispatchEvent(ExecutorEventDTO dto);
 
 }

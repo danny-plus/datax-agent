@@ -17,7 +17,7 @@ public interface DataxAgentService {
      * @param jobJsonFilePath
      * @throws Throwable
      */
-    void asyncExecuteDataxJob(String jobId, int taskId, String jobJsonFilePath, ExecutorDataxJobCallback callback) throws Throwable;
+    void asyncExecuteDataxJob(String jobId, int taskId, String jobJsonFilePath, ExecutorDataxJobCallback callback) ;
 
     List<DataxDTO> splitDataxJob(DataxDTO jobDatax);
 

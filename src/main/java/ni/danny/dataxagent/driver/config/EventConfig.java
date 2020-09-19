@@ -5,12 +5,11 @@ import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import com.lmax.disruptor.util.DaemonThreadFactory;
-import ni.danny.dataxagent.driver.dto.event.DriverExecutorEvent;
-import ni.danny.dataxagent.driver.dto.event.DriverExecutorEventFactory;
-import ni.danny.dataxagent.driver.dto.event.DriverJobEvent;
-import ni.danny.dataxagent.driver.dto.event.DriverJobEventFactory;
+import ni.danny.dataxagent.driver.dto.event.*;
+import ni.danny.dataxagent.driver.handler.DriverEventHandler;
 import ni.danny.dataxagent.driver.handler.DriverExecutorEventHandler;
 import ni.danny.dataxagent.driver.handler.DriverJobEventHandler;
+import ni.danny.dataxagent.driver.producer.DriverEventProducerWithTranslator;
 import ni.danny.dataxagent.driver.producer.DriverExecutorEventProducerWithTranslator;
 import ni.danny.dataxagent.driver.producer.DriverJobEventProducerWithTranslator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +43,16 @@ public class EventConfig {
     public DriverJobEventHandler driverJobEventHandler(){
         return new DriverJobEventHandler();
     }
+
+    @Lazy
+    @Bean
+    public DriverEventFactory driverEventFactory(){
+        return new DriverEventFactory();
+    }
+
+    @Lazy
+    @Bean
+    public DriverEventHandler driverEventHandler(){return new DriverEventHandler();}
 
     @Autowired
     private DriverExecutorEventFactory driverExecutorEventFactory;
@@ -79,6 +88,24 @@ public class EventConfig {
         return disruptor.getRingBuffer();
     }
 
+
+    @Autowired
+    private DriverEventFactory driverEventFactory;
+
+    @Autowired
+    private DriverEventHandler driverEventHandler;
+
+    @Lazy
+    @Bean
+    public RingBuffer<DriverEvent> driverEventRingBuffer(){
+        Disruptor<DriverEvent> disruptor
+                = new Disruptor<>(driverEventFactory,1024*1024,DaemonThreadFactory.INSTANCE
+                ,ProducerType.MULTI,new BlockingWaitStrategy());
+        disruptor.handleEventsWith(driverEventHandler);
+        disruptor.start();
+        return disruptor.getRingBuffer();
+    }
+
     @Autowired
     private RingBuffer<DriverExecutorEvent> driverExecutorEventRingBuffer;
 
@@ -97,4 +124,13 @@ public class EventConfig {
         return new DriverJobEventProducerWithTranslator(driverJobEventRingBuffer);
     }
 
+
+    @Autowired
+    private RingBuffer<DriverEvent> driverEventRingBuffer;
+
+    @Lazy
+    @Bean
+    public DriverEventProducerWithTranslator driverEventProducerWithTranslator(){
+        return new DriverEventProducerWithTranslator(driverEventRingBuffer);
+    }
 }

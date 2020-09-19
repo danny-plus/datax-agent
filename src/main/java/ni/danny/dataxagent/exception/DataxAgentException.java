@@ -1,7 +1,8 @@
 package ni.danny.dataxagent.exception;
 
+import lombok.Getter;
 import ni.danny.dataxagent.enums.exception.DataxAgentExceptionCodeEnum;
-
+@Getter
 public class DataxAgentException extends Exception {
     private String errType;
     private String errCode;
