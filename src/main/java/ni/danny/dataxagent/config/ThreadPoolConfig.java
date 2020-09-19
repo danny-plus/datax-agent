@@ -18,10 +18,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class ThreadPoolConfig {
 
     /** 核心线程数（默认线程数） */
-    @Value("${datax.excutor.pool.corePoolSize}")
+    @Value("${datax.executor.pool.corePoolSize}")
     private int corePoolSize;
     /** 最大线程数 */
-    @Value("${datax.excutor.pool.maxPoolSize}")
+    @Value("${datax.executor.pool.maxPoolSize}")
     private int maxPoolSize;
     /** 允许线程空闲时间（单位：默认为秒） */
     private static final int keepAliveTime = 10;
@@ -48,8 +48,8 @@ public class ThreadPoolConfig {
     @Bean("zookeeperThreadExecutor")
     public ThreadPoolTaskExecutor zookeeperThreadExecutor(){
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(3);
-        executor.setMaxPoolSize(5);
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(7);
         executor.setQueueCapacity(queueCapacity);
         executor.setKeepAliveSeconds(keepAliveTime);
         executor.setThreadNamePrefix("zookeeperThreadExecutor-");
@@ -59,33 +59,18 @@ public class ThreadPoolConfig {
         return executor;
     }
 
-    @Bean("driverReplayThreadExecutor")
-    public ThreadPoolTaskExecutor driverReplayThreadExecutor(){
+    @Bean("driverDispatchTaskThreadExecutor")
+    public ThreadPoolTaskExecutor driverDispatchTaskThreadExecutor(){
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(1);
-        executor.setMaxPoolSize(2);
-        executor.setQueueCapacity(0);
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(7);
+        executor.setQueueCapacity(queueCapacity);
         executor.setKeepAliveSeconds(keepAliveTime);
-        executor.setThreadNamePrefix("driverReplayThreadExecutor-");
+        executor.setThreadNamePrefix("driverDispatchTaskThreadExecutor-");
         // 线程池对拒绝任务的处理策略
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.initialize();
         return executor;
     }
-
-    @Bean("executorReplayThreadExecutor")
-    public ThreadPoolTaskExecutor executorReplayThreadExecutor(){
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(1);
-        executor.setMaxPoolSize(2);
-        executor.setQueueCapacity(0);
-        executor.setKeepAliveSeconds(keepAliveTime);
-        executor.setThreadNamePrefix("executorReplayThreadExecutor-");
-        // 线程池对拒绝任务的处理策略
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        executor.initialize();
-        return executor;
-    }
-
 
 }

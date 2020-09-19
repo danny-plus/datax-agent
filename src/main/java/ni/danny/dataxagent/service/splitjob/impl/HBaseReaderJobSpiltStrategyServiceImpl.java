@@ -12,6 +12,9 @@ import java.util.List;
 public class HBaseReaderJobSpiltStrategyServiceImpl implements HBaseReaderJobSpiltStrategyService {
     @Override
     public List<DataxDTO> spiltDataxJob(String jobId, DataxDTO dataxDTO) {
+
+
         return null;
+
     }
 }

@@ -1,48 +1,17 @@
 package ni.danny.dataxagent.dto;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
+import ni.danny.dataxagent.dto.datax.JobDTO;
+import ni.danny.dataxagent.dto.splitStrategy.SplitStrategyDTO;
 
 @EqualsAndHashCode
 @Data
 @ToString
+@AllArgsConstructor
 public class DataxDTO {
-    private Job job;
-    private SplitStrategy splitStrategy;
+    private JobDTO job;
+    private SplitStrategyDTO splitStrategy;
     private String jobId;
-    private String taskId;
+    private int taskId;
 
-    @Data
-    @EqualsAndHashCode
-    public class SplitStrategy{
-        private String type;
-        private Object strategy;
-    }
-
-    @Data
-    @EqualsAndHashCode
-    public class Job{
-        private Content[] content;
-        private Setting setting;
-
-        @Data
-        @EqualsAndHashCode
-        public class Content{
-            private Object reader;
-            private Object writer;
-        }
-
-        @Data
-        @EqualsAndHashCode
-        public class Setting{
-            private Speed speed;
-
-            @Data
-            @EqualsAndHashCode
-            public class Speed{
-                private String channel;
-            }
-        }
-    }
 }

@@ -2,12 +2,9 @@ package ni.danny.dataxagent.config;
 
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
-import ni.danny.dataxagent.service.DataxDriverService;
-import ni.danny.dataxagent.service.DataxExecutorService;
+import ni.danny.dataxagent.service.StartService;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
-import org.apache.zookeeper.CreateMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,12 +22,7 @@ public class ZookeeperSessionConnectionListener{
     private CuratorFramework zookeeperExecutorClient;
 
     @Autowired
-    private DataxExecutorService dataxExecutorService;
-
-    @Autowired
-    private DataxDriverService dataxDriverService;
-
-
+    private StartService startService;
 
     @Bean
     public ConnectionStateListener driverSessionConnectionListener(){
@@ -40,7 +32,7 @@ public class ZookeeperSessionConnectionListener{
                 try{
                     if(zookeeperDriverClient.blockUntilConnected(60, TimeUnit.MINUTES)){
                         log.info("ZK RECONNECTED");
-                        dataxDriverService.regist();
+                        startService.registerDriver();
 
                         break;
                     }else{
@@ -62,7 +54,7 @@ public class ZookeeperSessionConnectionListener{
 
                     if(zookeeperExecutorClient.blockUntilConnected(60,TimeUnit.MINUTES)){
                         log.info("ZK RECONNECTED");
-                        dataxExecutorService.regist();
+                        startService.registerExecutor();
                         break;
                     }else{
 

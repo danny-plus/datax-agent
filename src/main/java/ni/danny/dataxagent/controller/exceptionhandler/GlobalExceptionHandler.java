@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(value = MissingServletRequestParameterException.class)
+    @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseBody
     public ResponseDTO missingServletRequestParameterException(MissingServletRequestParameterException exception){
 

@@ -16,8 +16,11 @@ public class DataxJobConstant {
     public static ConcurrentHashMap<String, DataxLogDTO> executorKafkaLogs = new ConcurrentHashMap<>();
 
     public final static String JOB_FINISH = "FINISH";
+    public final static String JOB_REJECT = "REJECT";
+
 
     public final static String TASK_FINISH = "FINISH";
+    public final static String TASK_REJECT = "REJECT";
 
     public final static String EXECUTOR_HEALTH_CHECK_URL = "/actuator/health";
 
