@@ -156,6 +156,8 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
     @Override
     public void finishTask(DataxExecutorTaskDTO dto)  {
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS",ExecutorTaskStatusEnum.FINISH.getValue());
         log.info("[{}] finish , recycle start ",dto);
         String threadTaskPath = JOB_EXECUTOR_ROOT_PATH
                 +ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()
@@ -168,8 +170,6 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
             if(stat != null){
                 String tmpTraceId = new String(zookeeperExecutorClient.getData().forPath(threadTaskPath));
                 if(tmpTraceId.equals(dto.getTraceId())){
-                    MDC.remove("DATAX-STATUS");
-                    MDC.put("DATAX-STATUS",ExecutorTaskStatusEnum.FINISH.getValue());
                     zookeeperExecutorClient.setData().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+ dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread(),ExecutorTaskStatusEnum.FINISH.getValue().getBytes());
                     zookeeperExecutorClient.delete().guaranteed().forPath(threadTaskPath);
                 }else{

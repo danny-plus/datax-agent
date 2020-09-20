@@ -84,6 +84,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         SofaTracerSpan sofaTracerSpan = sofaTraceContext.getCurrentSpan();
         sofaTracerSpan.setBaggageItem("DATAX-JOBID",jobId);
         sofaTracerSpan.setBaggageItem("DATAX-TASKID",taskId+"");
+        sofaTracerSpan.setBaggageItem("DATAX-STATUS",ExecutorTaskStatusEnum.START.getValue()+"");
         MDC.remove("DATAX-JOBID");
         MDC.remove("DATAX-TASKID");
         MDC.put("DATAX-JOBID",jobId);
@@ -97,6 +98,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         String[] dataxArgs = {"-job",jobJsonFilePath,"-mode","standalone"
                 ,"-jobid",taskId+""};
         try{
+            sofaTracerSpan.setBaggageItem("DATAX-STATUS",ExecutorTaskStatusEnum.RUNNING.getValue()+"");
             MDC.remove("DATAX-STATUS");
             MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.RUNNING.getValue());
             Engine.entry(dataxArgs);
