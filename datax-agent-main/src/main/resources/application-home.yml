@@ -8,6 +8,8 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 datax:
   home: /Users/bingobing/Workspaces/tools/datax
+  split:
+    home: /Users/bingobing/Workspaces/tools/datax-split
   job:
     home: /Users/bingobing/Workspaces/tools/datax/script/
     task:

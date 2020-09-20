@@ -19,5 +19,4 @@ import java.util.Map;
         ,includeFilters = { @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = DataxSplitService.class) } )
 public class DataxSplitConfig {
 
-
 }

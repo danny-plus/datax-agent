@@ -62,6 +62,7 @@ public class DataxJobSpiltContextServiceImpl implements DataxJobSpiltContextServ
         return dataxDTOList;
     }
 
+    //TODO 启动时加载指定文件目录下的拆解插件
     private List<DataxDTO> splitDataxJobByLocal(String name, DataxDTO dataxDTO){
         return null;
     }
@@ -71,9 +72,7 @@ public class DataxJobSpiltContextServiceImpl implements DataxJobSpiltContextServ
 
     private List<DataxDTO> splitDataxJobByRemote(String name, DataxDTO dataxDTO){
         String url = dataxDTO.getSplitStrategy().getUrl();
-        String result = restTemplate.postForObject(url,dataxDTO,String.class);
-        List<LinkedMultiValueMap> list = gson.fromJson(result,List.class);
-
-        return null;
+        List<DataxDTO> result = restTemplate.postForObject(url,dataxDTO,ArrayList.class);
+        return result;
     }
 }
