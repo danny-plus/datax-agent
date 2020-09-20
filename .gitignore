@@ -38,3 +38,10 @@ build/
 /target/
 /.idea/
 /.mvn/
+/datax-split/datax-spilt-base/datax-spilt-base.iml
+/datax-split/datax-spilt-base/datax-spilt-base.iml
+/datax-split/datax-split-hbase11reader/datax-split-hbase11reader.iml
+/datax-split/datax-spilt-base/datax-spilt-base.iml
+/datax-split/datax-spilt-base/datax-spilt-base.iml
+/datax-split/datax-split-hbase11reader/datax-split-hbase11reader.iml
+/datax-split/datax-split-oraclereader/datax-split-oraclereader.iml

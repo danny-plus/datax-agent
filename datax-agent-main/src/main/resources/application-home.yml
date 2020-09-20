@@ -1,0 +1,26 @@
+spring:
+  kafka:
+    bootstrap-servers: 192.168.8.2:9092
+    consumer:
+      group-id: datax-agent
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+datax:
+  home: /Users/bingobing/Workspaces/tools/datax
+  split:
+    home: /Users/bingobing/Workspaces/tools/datax-split
+  job:
+    home: /Users/bingobing/Workspaces/tools/datax/script/
+    task:
+      maxRejectTimes: 3
+      maxDispatchTimes: 5
+  executor:
+    pool:
+      corePoolSize: 2
+      maxPoolSize: 3
+  maxCheckTimes: 5
+  zookeeper:
+    addressAndPort: 192.168.8.2:22181
+
+
