@@ -1,0 +1,4 @@
+[submodule "datax-split"]
+	path = datax-split
+	url = git@github.com:danny-ni513/datax-split.git
+	branch = master
