@@ -25,8 +25,6 @@ public class DataxAgentApplication {
         SpringApplication.run(DataxAgentApplication.class, args);
     }
 
-
-
     @Bean
     public Gson gson(){
         GsonBuilder builder = new GsonBuilder();
