@@ -8,7 +8,7 @@
         <module>datax-split/datax-spilt-base</module>
         <module>datax-split/datax-split-oraclereader</module>
         <module>datax-split/datax-split-hbase11reader</module>
-        <module>monitor-web</module>
+        <module>datax-agent-monitor</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -18,7 +18,7 @@
     </parent>
     <groupId>ni.danny</groupId>
     <artifactId>datax-agent</artifactId>
-    <version>0.0.1-RELEASE</version>
+    <version>0.0.2-RELEASE</version>
     <name>datax-agent</name>
     <description>agent-shell for datax</description>
 
