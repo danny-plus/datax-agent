@@ -8,6 +8,7 @@
         <module>datax-split/datax-spilt-base</module>
         <module>datax-split/datax-split-oraclereader</module>
         <module>datax-split/datax-split-hbase11reader</module>
+        <module>monitor-web</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
