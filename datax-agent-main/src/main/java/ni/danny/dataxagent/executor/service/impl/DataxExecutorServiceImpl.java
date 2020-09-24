@@ -43,7 +43,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
     private ExecutorEventProducerWithTranslator executorEventProducerWithTranslator;
 
     @Autowired
-    private ExecutorListenService listenService;
+    private ExecutorListenService executorListenService;
 
     @Autowired
     private AppInfoComp appInfoComp;
@@ -84,7 +84,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
     @Override
     public void listen() throws Exception {
-        listenService.executorWatchJobExecutor();
+        executorListenService.executorWatchJobExecutor();
     }
 
     @Override

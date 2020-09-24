@@ -182,36 +182,47 @@ public class DataxDriverServiceImpl implements DataxDriverService {
                         .forPath(threadTaskPath,ExecutorTaskStatusEnum.INIT.getValue().getBytes());
                 dataxAgentService.dispatchTask(taskDTO.getJobId(),taskDTO.getTaskId(),threadDTO.getExecutor(),threadDTO.getThread());
 
-                driverEventProducerWithTranslator.onData(dto.delay(5*1000));
+                driverEventProducerWithTranslator.onData(dto.delay(1000));
             }catch (Exception ex) {
                 synchronized (this){
-                    addWaitExecuteTask(taskDTO);
-                    addIdleThread(threadDTO);
+                    addHandlerResource(threadDTO,taskDTO,dto);
                 }
             }
         }else if(taskDTO!=null){
-            driverEventProducerWithTranslator.onData(dto.updateRetry());
-            addWaitExecuteTask(taskDTO);
-
+            addHandlerResource(null,taskDTO,dto);
         }else if(threadDTO!=null){
-            driverEventProducerWithTranslator.onData(dto.updateRetry());
-            addIdleThread(threadDTO);
+            addHandlerResource(threadDTO,null,dto);
+        }
+    }
+
+    @Override
+    public void addHandlerResource(ExecutorThreadDTO threadDTO, JobTaskDTO taskDTO, DriverEventDTO dto) {
+        if(dto==null){
+            dto = new DriverEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH);
+        }
+        if(taskDTO!=null){
+            if(addWaitExecuteTask(taskDTO)){
+                dispatchEvent(dto.delay(1000));
+            }
+        }
+        if(threadDTO!=null){
+            if(addIdleThread(threadDTO)){
+                dispatchEvent(dto.delay(1000));
+            }
         }
     }
 
 
-
-    @Override
-    public void addWaitExecuteTask(JobTaskDTO taskDTO){
+    private boolean addWaitExecuteTask(JobTaskDTO taskDTO){
         boolean insertResult = ZookeeperConstant.waitForExecuteTaskSet.add(taskDTO.priority(-10));
-        log.debug("ZookeeperConstant.waitForExecuteTaskSet size = [{}] ,insertResult = [{}]",ZookeeperConstant.waitForExecuteTaskSet.size(),insertResult);
-
+        log.info("ZookeeperConstant.waitForExecuteTaskSet size = [{}] ,insertResult = [{}]",ZookeeperConstant.waitForExecuteTaskSet.size(),insertResult);
+        return insertResult;
     }
 
-    @Override
-    public void addIdleThread(ExecutorThreadDTO threadDTO){
+    private boolean addIdleThread(ExecutorThreadDTO threadDTO){
         boolean insertResult = ZookeeperConstant.idleThreadSet.add(threadDTO.priority(-10));
-        log.debug("ZookeeperConstant.idleThreadSet size = [{}] ,insertResult = [{}]",ZookeeperConstant.idleThreadSet.size(),insertResult);
+        log.info("ZookeeperConstant.idleThreadSet size = [{}] ,insertResult = [{}]",ZookeeperConstant.idleThreadSet.size(),insertResult);
+        return insertResult;
     }
 
     @Override

@@ -64,6 +64,7 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
                 }
             }
             ZookeeperConstant.waitForExecuteTaskSet.addAll(tmpSet);
+            dataxDriverService.dispatchEvent(new DriverEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH).delay(2000));
         }catch (Exception ex){
             dataxDriverService.dispatchJobEvent(new DriverJobEventDTO(DriverJobEventTypeEnum.JOB_SCAN
                     ,null,0,null,null,2*1000));
@@ -193,8 +194,7 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
 
     @Override
     public void taskCreatedEvent(DriverJobEventDTO eventDTO) {
-        dataxDriverService.addWaitExecuteTask(new JobTaskDTO(eventDTO.getJobId(),eventDTO.getTaskId()));
-        dataxDriverService.dispatchEvent(new DriverEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH).delay(300));
+        dataxDriverService.addHandlerResource(null,new JobTaskDTO(eventDTO.getJobId(),eventDTO.getTaskId()),null);
     }
 
     @Override
@@ -272,7 +272,7 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
                                 +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+eventDTO.getTaskId()
                         ,ExecutorTaskStatusEnum.REJECT.getValue().getBytes());
             }else{
-                dataxDriverService.addWaitExecuteTask(new JobTaskDTO(eventDTO.getJobId(),eventDTO.getTaskId()));
+                dataxDriverService.addHandlerResource(null,new JobTaskDTO(eventDTO.getJobId(),eventDTO.getTaskId()),null);
             }
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
