@@ -8,13 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.Random;
 
 @Slf4j
 @Component
 public class WatchDriverListener implements CuratorCacheListener {
 
-    @Autowired
+    @Resource
     @Lazy
     private DataxDriverService dataxDriverService;
 

@@ -5,6 +5,8 @@ server:
 spring:
   application:
     name: datax-agent
+  profiles:
+    active: dev
 management:
   endpoint:
     web:

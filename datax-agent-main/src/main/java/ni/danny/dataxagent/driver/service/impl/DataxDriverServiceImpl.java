@@ -22,6 +22,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,9 @@ import static ni.danny.dataxagent.constant.ZookeeperConstant.*;
 
 
 
+/**
+ * @author danny_ni
+ */
 @Slf4j
 @Service
 public class DataxDriverServiceImpl implements DataxDriverService {
@@ -43,6 +47,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     private DriverExecutorEventProducerWithTranslator driverExecutorEventProducerWithTranslator;
 
     @Autowired
+    @Lazy
     private CuratorFramework zookeeperDriverClient;
 
     @Autowired

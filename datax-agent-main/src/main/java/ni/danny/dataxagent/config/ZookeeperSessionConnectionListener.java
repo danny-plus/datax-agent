@@ -9,19 +9,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Configuration
 public class ZookeeperSessionConnectionListener{
 
-    @Autowired
+    @Resource
     private CuratorFramework zookeeperDriverClient;
 
-    @Autowired
+    @Resource
     private CuratorFramework zookeeperExecutorClient;
 
-    @Autowired
+    @Resource
     private StartService startService;
 
     @Bean

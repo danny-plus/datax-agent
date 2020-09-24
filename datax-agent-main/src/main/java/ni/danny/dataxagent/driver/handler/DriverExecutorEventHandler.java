@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 public class DriverExecutorEventHandler implements EventHandler<DriverExecutorEvent> {
 
     @Autowired
+    @Lazy
     private DataxDriverExecutorService dataxDriverExecutorService;
 
     @Autowired

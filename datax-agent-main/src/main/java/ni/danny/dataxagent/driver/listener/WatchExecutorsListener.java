@@ -5,12 +5,17 @@ import ni.danny.dataxagent.driver.service.DataxDriverExecutorService;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+
 @Slf4j
 @Component
 public class WatchExecutorsListener implements CuratorCacheListener {
 
-    @Autowired
+    @Resource
+    @Lazy
     private DataxDriverExecutorService dataxDriverExecutorService;
 
     @Override

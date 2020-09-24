@@ -10,16 +10,18 @@ import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+
 @Slf4j
 @Component
 public class WatchJobsListener implements CuratorCacheListener {
 
-    @Autowired
     @Lazy
+    @Resource
     private DataxDriverJobService dataxDriverJobService;
 
-    @Autowired
     @Lazy
+    @Resource
     private DataxDriverExecutorService dataxDriverExecutorService;
 
     @Override
