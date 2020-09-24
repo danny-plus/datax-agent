@@ -31,9 +31,11 @@ import java.util.Set;
 public class DataxDriverJobServiceImpl implements DataxDriverJobService {
 
     @Autowired
+    @Lazy
     private CuratorFramework zookeeperDriverClient;
 
     @Autowired
+    @Lazy
     private DataxAgentService dataxAgentService;
 
     @Autowired
