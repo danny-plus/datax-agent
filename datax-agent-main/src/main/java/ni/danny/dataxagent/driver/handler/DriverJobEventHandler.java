@@ -29,15 +29,15 @@ public class DriverJobEventHandler implements EventHandler<DriverJobEvent> {
             return;
         }
         if(event.getDto().getDelayTime()>System.currentTimeMillis()){
-            dataxDriverService.dispatchJobEvent(event.getDto());
             event.clear();
+            dataxDriverService.dispatchJobEvent(event.getDto());
             return;
         }
 
         while(!ZookeeperConstant.STATUS_RUNNING.equals(ZookeeperConstant.driverJobEventHandlerStatus)){
             Thread.sleep(5*1000);
         }
-        log.info(event.getDto().toString());
+
         switch (event.getDto().getType().toString()){
             case "JOB_SCAN": dataxDriverJobService.scanJob();break;
             case "JOB_CREATED": dataxDriverJobService.jobCreatedEvent(event.getDto());break;

@@ -5,8 +5,13 @@ server:
 spring:
   application:
     name: datax-agent-monitor
-  profiles:
-    active: dev
+  kafka:
+    consumer:
+      bootstrap-servers: 192.168.8.2:9092
+      group-id: datax-agent-monitor
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 management:
   endpoint:
     web:

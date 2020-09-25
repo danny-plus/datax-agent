@@ -2,18 +2,21 @@
 <Configuration status="INFO" monitorInterval = "30">
 <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-        <PatternLayout pattern = "jobId [%X{DATAX-JOBID}] - taskId=[%X{DATAX-TASKID}] - status=[%X{DATAX-STATUS}]- traceId = [%X{SOFA-TraceId}]-%d{HH:mm:ss.SSS} {%t} %-5level %logger{36} - %msg%n" />
+        <PatternLayout pattern = "%d{HH:mm:ss.SSS} {%t} %-5level %c{1.} - %msg%n" />
     </Console>
     <Kafka name="KafkaLog" topic="datax-log" ignoreExceptions="false">
-        <PatternLayout pattern="%X{DATAX-JOBID}-%X{DATAX-TASKID}-%X{SOFA-TraceId}-%X{DATAX-STATUS} ||| {'jobId':'%X{DATAX-JOBID}','taskId':'%X{DATAX-TASKID}','status':'%X{DATAX-STATUS}','traceId';'%X{SOFA-TraceId}','logTime':'%d{HH:mm:ss.SSS}','threadName':'%t','logLevel':'%-5level','logClass':'%logger{36}','msg':'%msg%n'}"/>
+        <PatternLayout pattern="%X{DATAX-JOBID}-%X{DATAX-TASKID}-%X{DATAX-STATUS}-%X{SOFA-TraceId}-%d{HH:mm:ss.SSS}-%msg%n "/>
         <Property name="bootstrap.servers">192.168.8.2:9092</Property>
         <Property name="max.block.ms">2000</Property>
     </Kafka>
 </Appenders>
     <Loggers>
-        <AsyncRoot level = "info" >
+        <AsyncRoot level = "warn" >
             <AppenderRef ref="Console"/>
         </AsyncRoot>
+        <AsyncLogger name="ni.danny.dataxagent.driver.service" level="info">
+            <AppenderRef ref="Console"/>
+        </AsyncLogger>
         <AsyncLogger name="com.alibaba.datax" level="INFO">
             <AppenderRef ref="KafkaLog"/>
         </AsyncLogger>

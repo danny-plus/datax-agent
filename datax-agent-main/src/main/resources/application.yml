@@ -6,7 +6,7 @@ spring:
   application:
     name: datax-agent
   profiles:
-    active: dev
+    active: home
 management:
   endpoint:
     web:

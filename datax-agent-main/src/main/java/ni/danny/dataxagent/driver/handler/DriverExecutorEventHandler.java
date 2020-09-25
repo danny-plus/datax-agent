@@ -26,8 +26,8 @@ public class DriverExecutorEventHandler implements EventHandler<DriverExecutorEv
             return;
         }
         if(event.getDto().getDelayTime()>System.currentTimeMillis()){
-            dataxDriverService.dispatchExecutorEvent(event.getDto());
             event.clear();
+            dataxDriverService.dispatchExecutorEvent(event.getDto());
             return;
         }
 

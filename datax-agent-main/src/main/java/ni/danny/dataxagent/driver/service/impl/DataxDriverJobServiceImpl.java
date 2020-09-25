@@ -217,6 +217,7 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
                         +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+eventDTO.getJobId()
                         ,ExecutorTaskStatusEnum.REJECT.getValue().getBytes());
             }
+            dataxDriverService.addHandlerResource(null,new JobTaskDTO(eventDTO.getJobId(),eventDTO.getTaskId()),null);
         }catch (Exception ex){
             eventDTO.setDelay(2*1000);
             dataxDriverService.dispatchJobEvent(eventDTO);
