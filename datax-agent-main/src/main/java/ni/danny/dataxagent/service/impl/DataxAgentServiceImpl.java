@@ -84,6 +84,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         SofaTracerSpan sofaTracerSpan = sofaTraceContext.getCurrentSpan();
         sofaTracerSpan.setBaggageItem("DATAX-JOBID",jobId);
         sofaTracerSpan.setBaggageItem("DATAX-TASKID",taskId+"");
+        sofaTracerSpan.setBaggageItem("DATAX-STATUS",ExecutorTaskStatusEnum.START.getValue()+"");
         MDC.remove("DATAX-JOBID");
         MDC.remove("DATAX-TASKID");
         MDC.put("DATAX-JOBID",jobId);
@@ -97,6 +98,9 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         String[] dataxArgs = {"-job",jobJsonFilePath,"-mode","standalone"
                 ,"-jobid",taskId+""};
         try{
+            sofaTracerSpan.setBaggageItem("DATAX-STATUS",ExecutorTaskStatusEnum.RUNNING.getValue()+"");
+            MDC.remove("DATAX-STATUS");
+            MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.RUNNING.getValue());
             Engine.entry(dataxArgs);
         }catch (Throwable e){
             callback.throwException(e);
@@ -115,6 +119,8 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.remove("DATAX-TASKID");
         MDC.put("DATAX-JOBID",dataxDTO.getJobId());
         MDC.put("DATAX-TASKID","");
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.INIT.getValue());
         log.info("SPLIT-JOB");
         return dataxJobSpiltContextService.splitDataxJob(dataxDTO);
     }
@@ -125,6 +131,8 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.remove("DATAX-TASKID");
         MDC.put("DATAX-JOBID",jobId);
         MDC.put("DATAX-TASKID","");
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.FINISH.getValue());
         log.info("FINISH-JOB");
     }
 
@@ -134,6 +142,8 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.remove("DATAX-TASKID");
         MDC.put("DATAX-JOBID",jobId);
         MDC.put("DATAX-TASKID","");
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.REJECT.getValue());
         log.info("REJECT-JOB");
     }
 
@@ -143,6 +153,8 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.remove("DATAX-TASKID");
         MDC.put("DATAX-JOBID",jobId);
         MDC.put("DATAX-TASKID",taskId+"");
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.FINISH.getValue());
         log.info("FINISH-TASK");
     }
 
@@ -152,6 +164,8 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.remove("DATAX-TASKID");
         MDC.put("DATAX-JOBID",jobId);
         MDC.put("DATAX-TASKID",taskId+"");
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.REJECT.getValue());
         log.info("REJECT-TASK");
     }
 
@@ -162,6 +176,8 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.remove("DATAX-TASKID");
         MDC.put("DATAX-JOBID",jobId);
         MDC.put("DATAX-TASKID",taskId+"");
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.INIT.getValue());
         log.info("DISPATCH-TASK-[{}]-[{}]",executor,thread);
     }
 

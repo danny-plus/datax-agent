@@ -1,6 +1,18 @@
 server:
   port: 8080
+  servlet:
+    context-path: /datax-agent
 spring:
   application:
     name: datax-agent
-
+  profiles:
+    active: home
+management:
+  endpoint:
+    web:
+      exposure:
+        include: 'loggers'
+    health:
+      show-details: ALWAYS
+logging:
+  config: classpath:log4j2.xml

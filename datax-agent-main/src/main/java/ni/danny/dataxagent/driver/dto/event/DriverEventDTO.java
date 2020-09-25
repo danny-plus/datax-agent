@@ -23,6 +23,11 @@ public class DriverEventDTO {
         this.delayTime = this.currentTime + this.delay;
     }
 
+    public DriverEventDTO reNew(){
+        this.uuid = UUID.randomUUID().toString();
+        return this;
+    }
+
 
     public DriverEventDTO updateRetry(){
         this.retryNum = retryNum+1;

@@ -45,13 +45,9 @@ public interface DataxDriverService {
      */
     boolean checkDriverIsSelf() throws Exception;
 
-
-
     void dispatchTask(DriverEventDTO dto);
 
-    void addWaitExecuteTask(JobTaskDTO taskDTO);
-
-    void addIdleThread(ExecutorThreadDTO threadDTO);
+    void addHandlerResource(ExecutorThreadDTO threadDTO,JobTaskDTO taskDTO,DriverEventDTO dto);
 
     void dispatchJobEvent(DriverJobEventDTO dto);
 

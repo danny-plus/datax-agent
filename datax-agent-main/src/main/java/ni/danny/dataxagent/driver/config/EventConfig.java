@@ -17,50 +17,45 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
+import javax.annotation.Resource;
+
 @Configuration
 public class EventConfig {
 
-    @Lazy
     @Bean
     public DriverExecutorEventFactory driverExecutorEventFactory(){
         return new DriverExecutorEventFactory();
     }
 
-    @Lazy
     @Bean
     public DriverJobEventFactory driverJobEventFactory(){
         return new DriverJobEventFactory();
     }
 
-    @Lazy
     @Bean
     public DriverExecutorEventHandler driverExecutorEventHandler(){
         return new DriverExecutorEventHandler();
     }
 
-    @Lazy
     @Bean
     public DriverJobEventHandler driverJobEventHandler(){
         return new DriverJobEventHandler();
     }
 
-    @Lazy
     @Bean
     public DriverEventFactory driverEventFactory(){
         return new DriverEventFactory();
     }
 
-    @Lazy
     @Bean
     public DriverEventHandler driverEventHandler(){return new DriverEventHandler();}
 
-    @Autowired
+    @Resource
     private DriverExecutorEventFactory driverExecutorEventFactory;
 
-    @Autowired
+    @Resource
     private DriverExecutorEventHandler driverExecutorEventHandler;
 
-    @Lazy
     @Bean
     public RingBuffer<DriverExecutorEvent> driverExecutorEventRingBuffer(){
         Disruptor<DriverExecutorEvent> disruptor
@@ -71,13 +66,12 @@ public class EventConfig {
         return disruptor.getRingBuffer();
     }
 
-    @Autowired
+    @Resource
     private DriverJobEventFactory driverJobEventFactory;
 
-    @Autowired
+    @Resource
     private DriverJobEventHandler driverJobEventHandler;
 
-    @Lazy
     @Bean
     public RingBuffer<DriverJobEvent> driverJobEventRingBuffer(){
         Disruptor<DriverJobEvent> disruptor
@@ -89,13 +83,12 @@ public class EventConfig {
     }
 
 
-    @Autowired
+    @Resource
     private DriverEventFactory driverEventFactory;
 
-    @Autowired
+    @Resource
     private DriverEventHandler driverEventHandler;
 
-    @Lazy
     @Bean
     public RingBuffer<DriverEvent> driverEventRingBuffer(){
         Disruptor<DriverEvent> disruptor
@@ -106,29 +99,26 @@ public class EventConfig {
         return disruptor.getRingBuffer();
     }
 
-    @Autowired
+    @Resource
     private RingBuffer<DriverExecutorEvent> driverExecutorEventRingBuffer;
 
-    @Lazy
     @Bean
     public DriverExecutorEventProducerWithTranslator driverExecutorEventProducerWithTranslator(){
         return new DriverExecutorEventProducerWithTranslator(driverExecutorEventRingBuffer);
     }
 
-    @Autowired
+    @Resource
     private RingBuffer<DriverJobEvent> driverJobEventRingBuffer;
 
-    @Lazy
     @Bean
     public DriverJobEventProducerWithTranslator driverJobEventProducerWithTranslator(){
         return new DriverJobEventProducerWithTranslator(driverJobEventRingBuffer);
     }
 
 
-    @Autowired
+    @Resource
     private RingBuffer<DriverEvent> driverEventRingBuffer;
 
-    @Lazy
     @Bean
     public DriverEventProducerWithTranslator driverEventProducerWithTranslator(){
         return new DriverEventProducerWithTranslator(driverEventRingBuffer);

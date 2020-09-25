@@ -43,7 +43,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
     private ExecutorEventProducerWithTranslator executorEventProducerWithTranslator;
 
     @Autowired
-    private ExecutorListenService listenService;
+    private ExecutorListenService executorListenService;
 
     @Autowired
     private AppInfoComp appInfoComp;
@@ -84,7 +84,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
     @Override
     public void listen() throws Exception {
-        listenService.executorWatchJobExecutor();
+        executorListenService.executorWatchJobExecutor();
     }
 
     @Override
@@ -156,6 +156,8 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
     @Override
     public void finishTask(DataxExecutorTaskDTO dto)  {
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS",ExecutorTaskStatusEnum.FINISH.getValue());
         log.info("[{}] finish , recycle start ",dto);
         String threadTaskPath = JOB_EXECUTOR_ROOT_PATH
                 +ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()
@@ -166,15 +168,8 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
             // 重放时不一致问题
             Stat stat = zookeeperExecutorClient.checkExists().forPath(threadTaskPath);
             if(stat != null){
-                String tmpTraceId = new String(zookeeperExecutorClient.getData().forPath(threadTaskPath));
-                if(tmpTraceId.equals(dto.getTraceId())){
-                    MDC.remove("DATAX-STATUS");
-                    MDC.put("DATAX-STATUS",ExecutorTaskStatusEnum.FINISH.getValue());
                     zookeeperExecutorClient.setData().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+ dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread(),ExecutorTaskStatusEnum.FINISH.getValue().getBytes());
-                    zookeeperExecutorClient.delete().guaranteed().forPath(threadTaskPath);
-                }else{
-                    log.error("not match traceId, nodeData traceId = [{}], dto = [{}]",tmpTraceId,dto);
-                }
+                    zookeeperExecutorClient.delete().forPath(threadTaskPath);
             }
             log.info("[{}] finish, recycle end ",dto);
         }catch (Exception ex){
@@ -187,6 +182,8 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
 
     @Override
     public void rejectTask(DataxExecutorTaskDTO dto) {
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS",ExecutorTaskStatusEnum.REJECT.getValue());
         log.info("[{}] reject , recycle start ",dto);
         String threadTaskPath = JOB_EXECUTOR_ROOT_PATH
                 +ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()
@@ -194,18 +191,11 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
                 +ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()
                 +JOB_TASK_SPLIT_TAG+dto.getTaskId();
         try{
-            // 重放时不一致问题
             Stat stat = zookeeperExecutorClient.checkExists().forPath(threadTaskPath);
             if(stat != null){
-                String tmpTraceId = new String(zookeeperExecutorClient.getData().forPath(threadTaskPath));
-                if(tmpTraceId==null||tmpTraceId.isEmpty()||tmpTraceId.equals(dto.getTraceId())){
-                    MDC.remove("DATAX-STATUS");
-                    MDC.put("DATAX-STATUS",ExecutorTaskStatusEnum.REJECT.getValue());
+
                     zookeeperExecutorClient.setData().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+ dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread(),ExecutorTaskStatusEnum.REJECT.getValue().getBytes());
-                    zookeeperExecutorClient.delete().guaranteed().forPath(threadTaskPath);
-                }else{
-                    log.error("not match traceId, nodeData traceId = [{}], dto = [{}]",tmpTraceId,dto);
-                    }
+                    zookeeperExecutorClient.delete().forPath(threadTaskPath);
             }
         log.info("[{}] reject, recycle end ",dto);
         }catch (Exception ex){

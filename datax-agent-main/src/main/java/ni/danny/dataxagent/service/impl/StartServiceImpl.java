@@ -10,12 +10,16 @@ import org.apache.curator.framework.imps.CuratorFrameworkState;
 import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class StartServiceImpl implements StartService {
+
+    @Value("${datax.agent.role}")
+    private String agentRole;
 
     @Autowired
     private CuratorFramework zookeeperDriverClient;
@@ -38,8 +42,12 @@ public class StartServiceImpl implements StartService {
 
     @Override
     public void run(ApplicationArguments applicationArguments) {
-        registerDriver();
-        registerExecutor();
+        if(agentRole.contains("Driver")){
+            registerDriver();
+        }
+        if(agentRole.contains("Executor")){
+            registerExecutor();
+        }
     }
 
     @Override

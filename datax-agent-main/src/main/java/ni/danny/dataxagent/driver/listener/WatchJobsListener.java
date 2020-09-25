@@ -1,5 +1,6 @@
 package ni.danny.dataxagent.driver.listener;
 
+import groovy.lang.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 import ni.danny.dataxagent.driver.service.DataxDriverExecutorService;
@@ -9,14 +10,18 @@ import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+
 @Slf4j
 @Component
 public class WatchJobsListener implements CuratorCacheListener {
 
-    @Autowired
+    @Lazy
+    @Resource
     private DataxDriverJobService dataxDriverJobService;
 
-    @Autowired
+    @Lazy
+    @Resource
     private DataxDriverExecutorService dataxDriverExecutorService;
 
     @Override

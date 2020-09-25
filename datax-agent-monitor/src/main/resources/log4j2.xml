@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration status="INFO" monitorInterval = "30">
+<Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+        <PatternLayout pattern = "%d{HH:mm:ss.SSS} {%t} %-5level %c{1.} - %msg%n" />
+    </Console>
+    <Routing name="dataxLogFileRouting">
+        <Routes pattern="$${ctx:dataxJobId}">
+            <Route>
+                <RandomAccessFile name="dataxLog-${thread:dataxJobId}" fileName="logs/${ctx:dataxJobId}.log" immediateFlush="false">
+                    <PatternLayout pattern="%msg%n" charset="UTF-8"/>
+                </RandomAccessFile>
+            </Route>
+        </Routes>
+    </Routing>
+    <Async name="dataxLogFileAppender" bufferSize="1000" includeLocation="true">
+        <AppenderRef ref="dataxLogFileRouting"/>
+    </Async>
+</Appenders>
+    <Loggers>
+        <AsyncRoot level = "info" >
+            <AppenderRef ref="Console"/>
+        </AsyncRoot>
+        <AsyncLogger name="ni.danny.dataxagent.monitor.kafka" level="info">
+            <AppenderRef ref="dataxLogFileAppender"/>
+        </AsyncLogger>
+
+    </Loggers>
+    </Configuration>

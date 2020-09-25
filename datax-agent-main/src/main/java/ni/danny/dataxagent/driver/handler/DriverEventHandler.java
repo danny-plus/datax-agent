@@ -20,24 +20,24 @@ public class DriverEventHandler implements EventHandler<DriverEvent> {
 
     @Override
     public void onEvent(DriverEvent event, long l, boolean b) throws Exception {
+        log.debug("check is self => {} ",event.getDto().toString());
         if(!dataxDriverService.checkDriverIsSelf()){
             event.clear();
             return;
         }
+        log.debug("check is time => delay Time = [{}],now time = [{}]",event.getDto().getDelayTime(),System.currentTimeMillis());
         DriverEventDTO dto = event.getDto();
         if(dto.getDelayTime()>System.currentTimeMillis()){
-            dataxDriverService.dispatchEvent(dto);
             event.clear();
+            dataxDriverService.dispatchEvent(dto);
             return;
         }
-
+        log.debug("time is now ==>{}",event.getDto().toString());
         if(dto.getRetryNum()>10){
             event.clear();
             return;
-        }else{
-           dto = dto.delay();
         }
-
+        log.debug("can dispatch ==>{}",event.getDto().toString());
         switch (dto.getType().toString()){
             case "TASK_DISPATCH": dataxDriverService.dispatchTask(dto);break;
         }

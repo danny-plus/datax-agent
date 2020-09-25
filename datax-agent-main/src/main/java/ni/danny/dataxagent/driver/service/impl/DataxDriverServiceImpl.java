@@ -22,6 +22,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,9 @@ import static ni.danny.dataxagent.constant.ZookeeperConstant.*;
 
 
 
+/**
+ * @author danny_ni
+ */
 @Slf4j
 @Service
 public class DataxDriverServiceImpl implements DataxDriverService {
@@ -43,6 +47,7 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     private DriverExecutorEventProducerWithTranslator driverExecutorEventProducerWithTranslator;
 
     @Autowired
+    @Lazy
     private CuratorFramework zookeeperDriverClient;
 
     @Autowired
@@ -149,86 +154,114 @@ public class DataxDriverServiceImpl implements DataxDriverService {
     @Async("driverDispatchTaskThreadExecutor")
     @Override
     public  void dispatchTask(DriverEventDTO dto) {
-        log.info("try to dispatch the task ");
         JobTaskDTO taskDTO = null;
         ExecutorThreadDTO threadDTO = null;
 
         synchronized (this){
             taskDTO =  ZookeeperConstant.waitForExecuteTaskSet.pollFirst();
-
             threadDTO = ZookeeperConstant.idleThreadSet.pollFirst();
-            log.info("taskDTO = [{}], threadDTO = [{}]",taskDTO,threadDTO);
         }
 
         if(taskDTO!=null&&threadDTO!=null){
+            log.info("job-task to dispatch => taskDTO = [{}], threadDTO = [{}]",taskDTO.toString(),threadDTO.toString());
+            log.info("now  waitForExecuteTaskSet.size = [{}], idleThreadSet = [{}]",ZookeeperConstant.waitForExecuteTaskSet.size()
+                    ,ZookeeperConstant.idleThreadSet.size());
             try{
                 String taskThreadPath = ZookeeperConstant.JOB_LIST_ROOT_PATH+ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG
                         +taskDTO.getJobId()+ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+taskDTO.getTaskId()
                         +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+threadDTO.getExecutor()
                         +ZookeeperConstant.JOB_TASK_SPLIT_TAG+threadDTO.getThread();
-                zookeeperDriverClient.create().withMode(CreateMode.PERSISTENT)
-                        .forPath(taskThreadPath, ExecutorTaskStatusEnum.INIT.getValue().getBytes());
-
+                Stat taskThreadStat = zookeeperDriverClient.checkExists().forPath(taskThreadPath);
+                if(taskThreadStat==null){
+                    zookeeperDriverClient.create().withMode(CreateMode.PERSISTENT)
+                            .forPath(taskThreadPath, ExecutorTaskStatusEnum.INIT.getValue().getBytes());
+                }
                 String threadTaskPath = ZookeeperConstant.JOB_EXECUTOR_ROOT_PATH+ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG
                         +threadDTO.getExecutor()+ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+threadDTO.getThread()
                         +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+taskDTO.getJobId()+ZookeeperConstant.JOB_TASK_SPLIT_TAG
                         +taskDTO.getTaskId();
-                zookeeperDriverClient.create().withMode(CreateMode.PERSISTENT)
-                        .forPath(threadTaskPath,ExecutorTaskStatusEnum.INIT.getValue().getBytes());
-                dataxAgentService.dispatchTask(taskDTO.getJobId(),taskDTO.getTaskId(),threadDTO.getExecutor(),threadDTO.getThread());
-
-                driverEventProducerWithTranslator.onData(dto.delay(5*1000));
+                Stat threadTaskStat = zookeeperDriverClient.checkExists().forPath(threadTaskPath);
+                if(threadTaskStat==null){
+                    zookeeperDriverClient.create().withMode(CreateMode.PERSISTENT)
+                            .forPath(threadTaskPath,ExecutorTaskStatusEnum.INIT.getValue().getBytes());
+                    dataxAgentService.dispatchTask(taskDTO.getJobId(),taskDTO.getTaskId(),threadDTO.getExecutor(),threadDTO.getThread());
+                }
+                dispatchEvent(dto.delay(3000));
             }catch (Exception ex) {
+                log.error("{}",ex);
                 synchronized (this){
-                    addWaitExecuteTask(taskDTO);
-                    addIdleThread(threadDTO);
+                    addHandlerResource(threadDTO,taskDTO,dto);
                 }
             }
         }else if(taskDTO!=null){
-            driverEventProducerWithTranslator.onData(dto.updateRetry());
-            addWaitExecuteTask(taskDTO);
-
+            addHandlerResource(null,taskDTO,dto);
         }else if(threadDTO!=null){
-            driverEventProducerWithTranslator.onData(dto.updateRetry());
-            addIdleThread(threadDTO);
+            addHandlerResource(threadDTO,null,dto);
+        }
+    }
+
+    @Override
+    public void addHandlerResource(ExecutorThreadDTO threadDTO, JobTaskDTO taskDTO, DriverEventDTO dto) {
+        log.debug("threadDTO=[{}],taskDTO=[{}],eventDto=[{}]",threadDTO,taskDTO,dto);
+        if(dto==null){
+            dto = new DriverEventDTO(DriverJobEventTypeEnum.TASK_DISPATCH);
+        }
+        if(taskDTO!=null){
+            if(addWaitExecuteTask(taskDTO)){
+                dispatchEvent(dto.delay(1000));
+            }
+        }
+        if(threadDTO!=null){
+            if(addIdleThread(threadDTO)){
+                dispatchEvent(dto.delay(1000));
+            }
         }
     }
 
 
-
-    @Override
-    public void addWaitExecuteTask(JobTaskDTO taskDTO){
-        boolean insertResult = ZookeeperConstant.waitForExecuteTaskSet.add(taskDTO.priority(-10));
-        log.debug("ZookeeperConstant.waitForExecuteTaskSet size = [{}] ,insertResult = [{}]",ZookeeperConstant.waitForExecuteTaskSet.size(),insertResult);
-
+    private boolean addWaitExecuteTask(JobTaskDTO taskDTO){
+        boolean insertResult = ZookeeperConstant.waitForExecuteTaskSet.add(taskDTO);
+        log.debug("waitForExecuteTaskSet size = [{}] ,insertResult = [{}]",ZookeeperConstant.waitForExecuteTaskSet.size(),insertResult);
+        return insertResult;
     }
 
-    @Override
-    public void addIdleThread(ExecutorThreadDTO threadDTO){
-        boolean insertResult = ZookeeperConstant.idleThreadSet.add(threadDTO.priority(-10));
-        log.debug("ZookeeperConstant.idleThreadSet size = [{}] ,insertResult = [{}]",ZookeeperConstant.idleThreadSet.size(),insertResult);
+    private boolean addIdleThread(ExecutorThreadDTO threadDTO){
+        boolean insertResult = ZookeeperConstant.idleThreadSet.add(threadDTO);
+        log.debug("idleThreadSet size = [{}] ,insertResult = [{}]",ZookeeperConstant.idleThreadSet.size(),insertResult);
+        return insertResult;
     }
 
     @Override
     public void dispatchJobEvent(DriverJobEventDTO dto) {
-        if(dto.getRetryNum()<10){
-            dto.updateRetry();
+        if(dto.getDelayTime()<=System.currentTimeMillis()) {
+            if (dto.getRetryNum() < 10) {
+                driverJobEventProducerWithTranslator.onData(dto.updateRetry());
+            }
+        }else{
             driverJobEventProducerWithTranslator.onData(dto);
         }
     }
 
     @Override
     public void dispatchExecutorEvent(DriverExecutorEventDTO dto) {
-        if(dto.getRetryNum()<10){
-            dto.updateRetry();
+        if(dto.getDelayTime()<=System.currentTimeMillis()) {
+            if (dto.getRetryNum() < 10) {
+                driverExecutorEventProducerWithTranslator.onData(dto.updateRetry());
+            }
+        }else{
             driverExecutorEventProducerWithTranslator.onData(dto);
         }
     }
 
     @Override
     public void dispatchEvent(DriverEventDTO dto) {
-        if(dto.getRetryNum()<10){
-            driverEventProducerWithTranslator.onData(dto.updateRetry());
+        if(dto.getDelayTime()<=System.currentTimeMillis()){
+            if(dto.getRetryNum()<10){
+                driverEventProducerWithTranslator.onData(dto.updateRetry().reNew());
+            }
+        }else{
+            driverEventProducerWithTranslator.onData(dto.reNew());
         }
+
     }
 }
