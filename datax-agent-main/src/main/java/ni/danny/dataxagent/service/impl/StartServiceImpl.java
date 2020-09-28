@@ -52,8 +52,9 @@ public class StartServiceImpl implements StartService {
 
     @Override
     public void registerDriver() {
-
-        zookeeperDriverClient.start();
+        if(!CuratorFrameworkState.STARTED.equals(zookeeperDriverClient.getState())){
+            zookeeperDriverClient.start();
+        }
         try{
             Stat stat = zookeeperDriverClient.checkExists().forPath(ZookeeperConstant.DRIVER_PATH);
         }catch (Exception ex){
@@ -78,7 +79,10 @@ public class StartServiceImpl implements StartService {
 
     @Override
     public void registerExecutor() {
-        zookeeperExecutorClient.start();
+
+        if(!CuratorFrameworkState.STARTED.equals(zookeeperExecutorClient.getState())){
+            zookeeperExecutorClient.start();
+        }
         try{
             Stat stat = zookeeperExecutorClient.checkExists().forPath(ZookeeperConstant.DRIVER_PATH);
         }catch (Exception ex){

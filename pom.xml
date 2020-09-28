@@ -18,7 +18,7 @@
     </parent>
     <groupId>ni.danny</groupId>
     <artifactId>datax-agent</artifactId>
-    <version>0.0.2-RELEASE</version>
+    <version>0.0.3-RELEASE</version>
     <name>datax-agent</name>
     <description>agent-shell for datax</description>
 

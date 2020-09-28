@@ -7,7 +7,7 @@ spring:
     name: datax-agent-monitor
   kafka:
     consumer:
-      bootstrap-servers: 192.168.8.2:9092
+      bootstrap-servers: 192.168.101.20:9092,192.168.101.21:9092,192.168.101.22:9092
       group-id: datax-agent-monitor
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
