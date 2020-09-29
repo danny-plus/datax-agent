@@ -53,4 +53,7 @@ public class DataxAgentController {
         dataxAgentService.createJob(dataxDTO);
         return RespDTOEnum.SUCCESS.getResponseDTO();
     }
+
+    //REMOVEJOB
+
 }

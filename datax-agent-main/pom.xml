@@ -14,23 +14,17 @@
         <dependency>
             <groupId>ni.danny</groupId>
             <artifactId>datax-spilt-base</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>ni.danny</groupId>
             <artifactId>datax-split-oraclereader</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>ni.danny</groupId>
             <artifactId>datax-split-hbase11reader</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>ni.danny</groupId>
-            <artifactId>datax-spilt-base</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
+            <version>1.0.1</version>
         </dependency>
     </dependencies>
 
