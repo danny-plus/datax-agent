@@ -6,12 +6,12 @@
     </Console>
     <Kafka name="KafkaLog" topic="datax-log" ignoreExceptions="false">
         <PatternLayout pattern="%X{DATAX-JOBID}-%X{DATAX-TASKID}-%X{DATAX-STATUS}-%X{SOFA-TraceId}-%d{HH:mm:ss.SSS}-%msg%n "/>
-        <Property name="bootstrap.servers">192.168.8.2:9092</Property>
+        <Property name="bootstrap.servers">192.168.101.20:9092,192.168.101.21:9092,192.168.101.22:9092</Property>
         <Property name="max.block.ms">2000</Property>
     </Kafka>
 </Appenders>
     <Loggers>
-        <AsyncRoot level = "warn" >
+        <AsyncRoot level = "info" >
             <AppenderRef ref="Console"/>
         </AsyncRoot>
         <AsyncLogger name="ni.danny.dataxagent.driver.service" level="info">
@@ -24,6 +24,15 @@
             <AppenderRef ref="KafkaLog"/>
         </AsyncLogger>
         <AsyncLogger name="ni.danny.dataxagent.service.impl.DataxAgentServiceImpl" level="INFO">
+            <AppenderRef ref="KafkaLog"/>
+        </AsyncLogger>
+        <AsyncLogger name="ni.danny.dataxsplit.base.DataxSplitService" level="INFO">
+            <AppenderRef ref="KafkaLog"/>
+        </AsyncLogger>
+        <AsyncLogger name="ni.danny.dataxsplit.oracle.OracleDataxSplitServiceImpl" level="INFO">
+            <AppenderRef ref="KafkaLog"/>
+        </AsyncLogger>
+        <AsyncLogger name="ni.danny.dataxsplit.hbase11.HBase11DataxSplitServiceImpl" level="INFO">
             <AppenderRef ref="KafkaLog"/>
         </AsyncLogger>
     </Loggers>

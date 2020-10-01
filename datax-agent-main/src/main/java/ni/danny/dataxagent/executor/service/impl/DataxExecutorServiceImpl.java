@@ -28,6 +28,7 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import static ni.danny.dataxagent.constant.ZookeeperConstant.*;
@@ -37,18 +38,22 @@ import static ni.danny.dataxagent.constant.ZookeeperConstant.*;
 public class DataxExecutorServiceImpl implements DataxExecutorService {
 
     @Autowired
+    @Lazy
     private CuratorFramework zookeeperExecutorClient;
 
     @Autowired
     private ExecutorEventProducerWithTranslator executorEventProducerWithTranslator;
 
     @Autowired
+    @Lazy
     private ExecutorListenService executorListenService;
 
     @Autowired
+    @Lazy
     private AppInfoComp appInfoComp;
 
     @Autowired
+    @Lazy
     private DataxAgentService dataxAgentService;
 
     @Autowired

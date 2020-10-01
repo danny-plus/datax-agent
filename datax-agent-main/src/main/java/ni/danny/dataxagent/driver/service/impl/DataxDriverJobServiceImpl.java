@@ -162,7 +162,6 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
                         ,taskDto.getJobId(),taskDto.getTaskId(),null,gson.toJson(taskDto)));
             }
         }catch (Exception exception){
-
             dataxDriverService.dispatchJobEvent(eventDTO);
         }
     }

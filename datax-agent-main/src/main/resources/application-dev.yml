@@ -1,6 +1,6 @@
 spring:
   kafka:
-    bootstrap-servers: 192.168.8.2:9092
+    bootstrap-servers: 192.168.101.20:9092,192.168.101.21:9092,192.168.101.22:9092
     consumer:
       group-id: datax-agent
       auto-offset-reset: latest
@@ -19,7 +19,7 @@ datax:
       maxPoolSize: 3
   maxCheckTimes: 5
   zookeeper:
-    addressAndPort: 192.168.101.20:2181,192.168.101.21:2181,192.168.101.22:2181
+    addressAndPort: 192.168.101.20:12181,192.168.101.21:12181,192.168.101.22:12181
   agent:
     role: Driver,Executor
 
