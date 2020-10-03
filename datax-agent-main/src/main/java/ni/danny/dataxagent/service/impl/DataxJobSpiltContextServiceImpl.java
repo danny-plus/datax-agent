@@ -17,12 +17,15 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
+/**
+ * @author danny_ni
+ */
 @Slf4j
 @Service
 public class DataxJobSpiltContextServiceImpl implements DataxJobSpiltContextService {
 
     @Override
-    public List<DataxDTO> splitDataxJob(DataxDTO dataxDTO) {
+    public List<DataxDTO> splitDataxJob(DataxDTO dataxDTO) throws Exception{
         DataxSplitTypeEnum type = dataxDTO.getSplitStrategy().getType();
         String name = dataxDTO.getSplitStrategy().getName();
         log.info("type=[{}], name=[{}]",type,name);
@@ -49,7 +52,7 @@ public class DataxJobSpiltContextServiceImpl implements DataxJobSpiltContextServ
     @Autowired
     private Gson gson;
 
-    private List<DataxDTO> splitDataxJobByDepend(String name, DataxDTO dataxDTO){
+    private List<DataxDTO> splitDataxJobByDepend(String name, DataxDTO dataxDTO) throws Exception{
         List<DataxDTO> dataxDTOList = new ArrayList<>();
         DataxSplitService splitService = this.getDependDataxSplitService(name);
 

@@ -136,7 +136,14 @@ public class DataxDriverJobServiceImpl implements DataxDriverJobService {
         DataxDTO jobDatax = gson.fromJson(eventDTO.getDataxJson(),DataxDTO.class);
 
         List<DataxDTO> taskList = dataxAgentService.splitDataxJob(jobDatax);
-
+        if(taskList==null||taskList.isEmpty()){
+            try{
+                zookeeperDriverClient.delete().guaranteed().forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH
+                        +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+jobDatax.getJobId());
+                dataxAgentService.rejectJob(jobDatax.getJobId());
+            }catch (Exception ignore){}
+            return;
+        }
         try{
             for(DataxDTO taskDto:taskList){
                 String taskPath = ZookeeperConstant.JOB_LIST_ROOT_PATH

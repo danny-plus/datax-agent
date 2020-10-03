@@ -26,8 +26,7 @@ public interface DataxAgentService {
     void finishTask(String jobId,int taskId);
     void rejectTask(String jobId,int taskId);
     void dispatchTask(String jobId,int taskId,String executor,int thread);
-
     void createJob(DataxDTO dto) throws Exception;
-
+    void removeJob(String jobId);
 
 }

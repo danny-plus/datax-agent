@@ -12,6 +12,7 @@ public enum ExecutorTaskStatusEnum {
     REJECT("REJECT",new String[]{"START","INIT"}),
     NOT_EXIST("NOT_EXIST",null),
     NOT_SELF("NOT_SELF",null),
+    REMOVED("REMOVED",null),
     UNKOWN("UNKOWN",null);
 
     @Getter

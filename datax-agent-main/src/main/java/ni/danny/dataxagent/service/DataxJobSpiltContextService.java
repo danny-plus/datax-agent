@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface DataxJobSpiltContextService {
 
-    List<DataxDTO> splitDataxJob(DataxDTO dataxDTO);
+    List<DataxDTO> splitDataxJob(DataxDTO dataxDTO) throws Exception;
 }

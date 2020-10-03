@@ -26,14 +26,5 @@
         <AsyncLogger name="ni.danny.dataxagent.service.impl.DataxAgentServiceImpl" level="INFO">
             <AppenderRef ref="KafkaLog"/>
         </AsyncLogger>
-        <AsyncLogger name="ni.danny.dataxsplit.base.DataxSplitService" level="INFO">
-            <AppenderRef ref="KafkaLog"/>
-        </AsyncLogger>
-        <AsyncLogger name="ni.danny.dataxsplit.oracle.OracleDataxSplitServiceImpl" level="INFO">
-            <AppenderRef ref="KafkaLog"/>
-        </AsyncLogger>
-        <AsyncLogger name="ni.danny.dataxsplit.hbase11.HBase11DataxSplitServiceImpl" level="INFO">
-            <AppenderRef ref="KafkaLog"/>
-        </AsyncLogger>
     </Loggers>
     </Configuration>

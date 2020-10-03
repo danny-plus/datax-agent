@@ -121,8 +121,13 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.put("DATAX-TASKID","");
         MDC.remove("DATAX-STATUS");
         MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.INIT.getValue());
-        log.info("SPLIT-JOB");
-        return dataxJobSpiltContextService.splitDataxJob(dataxDTO);
+        log.info("START-SPLIT-JOB");
+        try {
+            return dataxJobSpiltContextService.splitDataxJob(dataxDTO);
+        }catch (Exception ex){
+            log.error("SPLIT-JOB-FAILED, cause=>",ex.getMessage());
+            return null;
+        }
     }
 
     @Override
@@ -182,6 +187,16 @@ public class DataxAgentServiceImpl implements DataxAgentService {
     }
 
     @Override
+    public void removeJob(String jobId) {
+        MDC.remove("DATAX-JOBID");
+        MDC.remove("DATAX-TASKID");
+        MDC.put("DATAX-JOBID",jobId);
+        MDC.remove("DATAX-STATUS");
+        MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.REMOVED.getValue());
+        log.info("JOB-REMOVED");
+    }
+
+    @Override
     public void createJob(DataxDTO dto)throws Exception {
         String jobId = dto.getJobId();
         if(jobId.contains(ZookeeperConstant.JOB_TASK_SPLIT_TAG)){
@@ -198,4 +213,5 @@ public class DataxAgentServiceImpl implements DataxAgentService {
                 .forPath(ZookeeperConstant.JOB_LIST_ROOT_PATH
                 +ZookeeperConstant.ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId(),dataxJson.getBytes());
     }
+
 }
