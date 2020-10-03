@@ -174,7 +174,7 @@ public class DataxExecutorServiceImpl implements DataxExecutorService {
             Stat stat = zookeeperExecutorClient.checkExists().forPath(threadTaskPath);
             if(stat != null){
                     zookeeperExecutorClient.setData().forPath(JOB_LIST_ROOT_PATH+ZOOKEEPER_PATH_SPLIT_TAG+dto.getJobId()+ZOOKEEPER_PATH_SPLIT_TAG+ dto.getTaskId()+ZOOKEEPER_PATH_SPLIT_TAG+dto.getExecutor()+JOB_TASK_SPLIT_TAG+dto.getThread(),ExecutorTaskStatusEnum.FINISH.getValue().getBytes());
-                    zookeeperExecutorClient.delete().forPath(threadTaskPath);
+                    zookeeperExecutorClient.delete().guaranteed().forPath(threadTaskPath);
             }
             log.info("[{}] finish, recycle end ",dto);
         }catch (Exception ex){
