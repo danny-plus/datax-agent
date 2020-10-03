@@ -21,6 +21,7 @@ datax:
   zookeeper:
     addressAndPort: 192.168.101.20:12181,192.168.101.21:12181,192.168.101.22:12181
   agent:
-    role: Driver,Executor
+    role: Driver
+    #,Executor
 
 

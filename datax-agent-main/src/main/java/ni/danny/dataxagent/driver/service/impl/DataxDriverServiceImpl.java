@@ -233,6 +233,9 @@ public class DataxDriverServiceImpl implements DataxDriverService {
 
     @Override
     public void dispatchJobEvent(DriverJobEventDTO dto) {
+        if(dto==null){
+            return;
+        }
         if(dto.getDelayTime()<=System.currentTimeMillis()) {
             if (dto.getRetryNum() < 10) {
                 driverJobEventProducerWithTranslator.onData(dto.updateRetry());
