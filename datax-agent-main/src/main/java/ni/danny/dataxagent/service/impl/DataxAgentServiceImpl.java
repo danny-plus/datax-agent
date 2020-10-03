@@ -1,5 +1,6 @@
 package ni.danny.dataxagent.service.impl;
 
+import com.alibaba.datax.common.exception.DataXException;
 import com.alibaba.datax.core.Engine;
 import com.alipay.common.tracer.core.context.trace.SofaTraceContext;
 import com.alipay.common.tracer.core.holder.SofaTraceContextHolder;
@@ -121,11 +122,16 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.put("DATAX-TASKID","");
         MDC.remove("DATAX-STATUS");
         MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.INIT.getValue());
-        log.info("START-SPLIT-JOB");
+        log.info("START SPLIT JOB");
         try {
             return dataxJobSpiltContextService.splitDataxJob(dataxDTO);
+        }catch (DataXException dataXException){
+            log.error("SPLIT JOB FAILED, errorCode=>{}, message=>{}, cause=>{}",dataXException.getErrorCode()
+                    ,dataXException.getMessage(),dataXException.getCause());
+            return null;
         }catch (Exception ex){
-            log.error("SPLIT-JOB-FAILED, cause=>",ex.getMessage());
+            log.error("SPLIT JOB FAILED, message=>{}, cause=>{}",ex.getMessage(),ex.getCause());
+
             return null;
         }
     }
@@ -138,7 +144,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.put("DATAX-TASKID","");
         MDC.remove("DATAX-STATUS");
         MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.FINISH.getValue());
-        log.info("FINISH-JOB");
+        log.info("FINISH JOB");
     }
 
     @Override
@@ -149,7 +155,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.put("DATAX-TASKID","");
         MDC.remove("DATAX-STATUS");
         MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.REJECT.getValue());
-        log.info("REJECT-JOB");
+        log.info("REJECT JOB");
     }
 
     @Override
@@ -160,7 +166,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.put("DATAX-TASKID",taskId+"");
         MDC.remove("DATAX-STATUS");
         MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.FINISH.getValue());
-        log.info("FINISH-TASK");
+        log.info("FINISH TASK");
     }
 
     @Override
@@ -171,7 +177,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.put("DATAX-TASKID",taskId+"");
         MDC.remove("DATAX-STATUS");
         MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.REJECT.getValue());
-        log.info("REJECT-TASK");
+        log.info("REJECT TASK");
     }
 
     @Override
@@ -183,7 +189,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.put("DATAX-TASKID",taskId+"");
         MDC.remove("DATAX-STATUS");
         MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.INIT.getValue());
-        log.info("DISPATCH-TASK-[{}]-[{}]",executor,thread);
+        log.info("DISPATCH TASK [{}] [{}]",executor,thread);
     }
 
     @Override
@@ -193,7 +199,7 @@ public class DataxAgentServiceImpl implements DataxAgentService {
         MDC.put("DATAX-JOBID",jobId);
         MDC.remove("DATAX-STATUS");
         MDC.put("DATAX-STATUS", ExecutorTaskStatusEnum.REMOVED.getValue());
-        log.info("JOB-REMOVED");
+        log.info("JOB REMOVED");
     }
 
     @Override
