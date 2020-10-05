@@ -5,13 +5,11 @@ import com.alipay.common.tracer.core.holder.SofaTraceContextHolder;
 import com.alipay.common.tracer.core.span.SofaTracerSpan;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.callback.ExecutorDataxJobCallback;
-import ni.danny.dataxagent.dto.DataxDTO;
-import ni.danny.dataxagent.dto.ResponseDTO;
-import ni.danny.dataxagent.dto.resp.AnsycExcuteRespDTO;
+import ni.danny.dataxagent.common.dto.DataxDTO;
+import ni.danny.dataxagent.common.dto.ResponseDTO;
+import ni.danny.dataxagent.common.dto.resp.AnsycExcuteRespDTO;
 import ni.danny.dataxagent.enums.RespDTOEnum;
 import ni.danny.dataxagent.service.DataxAgentService;
-import org.joda.time.DateTime;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

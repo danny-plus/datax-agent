@@ -10,7 +10,7 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.callback.ExecutorDataxJobCallback;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
-import ni.danny.dataxagent.dto.DataxDTO;
+import ni.danny.dataxagent.common.dto.DataxDTO;
 import ni.danny.dataxagent.enums.ExecutorTaskStatusEnum;
 import ni.danny.dataxagent.enums.exception.DataxAgentExceptionCodeEnum;
 import ni.danny.dataxagent.exception.DataxAgentCreateJobException;

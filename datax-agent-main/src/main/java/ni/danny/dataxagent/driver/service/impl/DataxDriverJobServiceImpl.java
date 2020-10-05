@@ -10,7 +10,7 @@ import ni.danny.dataxagent.driver.dto.event.DriverJobEventDTO;
 import ni.danny.dataxagent.driver.enums.DriverJobEventTypeEnum;
 import ni.danny.dataxagent.driver.service.DataxDriverJobService;
 import ni.danny.dataxagent.driver.service.DataxDriverService;
-import ni.danny.dataxagent.dto.DataxDTO;
+import ni.danny.dataxagent.common.dto.DataxDTO;
 import ni.danny.dataxagent.enums.ExecutorTaskStatusEnum;
 import ni.danny.dataxagent.service.DataxAgentService;
 import org.apache.curator.framework.CuratorFramework;

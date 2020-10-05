@@ -1,7 +1,7 @@
 package ni.danny.dataxagent.constant;
 
-import ni.danny.dataxagent.dto.DataxDTO;
-import ni.danny.dataxagent.dto.DataxLogDTO;
+import ni.danny.dataxagent.common.dto.DataxDTO;
+import ni.danny.dataxagent.common.dto.DataxLogDTO;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;

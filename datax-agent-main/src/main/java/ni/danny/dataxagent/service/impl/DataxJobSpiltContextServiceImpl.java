@@ -3,16 +3,12 @@ package ni.danny.dataxagent.service.impl;
 import com.alibaba.datax.common.util.Configuration;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import ni.danny.dataxagent.dto.DataxDTO;
+import ni.danny.dataxagent.common.dto.DataxDTO;
 import ni.danny.dataxagent.service.DataxJobSpiltContextService;
-import ni.danny.dataxagent.service.DataxJobSpiltStrategy;
-import ni.danny.dataxsplit.base.DataxSplitCallback;
 import ni.danny.dataxsplit.base.DataxSplitService;
 import ni.danny.dataxsplit.base.enums.DataxSplitTypeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;

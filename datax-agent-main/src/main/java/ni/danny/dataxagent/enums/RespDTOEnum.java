@@ -1,7 +1,7 @@
 package ni.danny.dataxagent.enums;
 
 import lombok.Getter;
-import ni.danny.dataxagent.dto.ResponseDTO;
+import ni.danny.dataxagent.common.dto.ResponseDTO;
 
 
 public enum RespDTOEnum {

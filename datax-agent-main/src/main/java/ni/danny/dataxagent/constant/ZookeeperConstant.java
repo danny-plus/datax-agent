@@ -3,12 +3,7 @@ package ni.danny.dataxagent.constant;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.driver.dto.ExecutorThreadDTO;
 import ni.danny.dataxagent.driver.dto.JobTaskDTO;
-import ni.danny.dataxagent.dto.ZookeeperEventDTO;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.PriorityQueue;
-import java.util.Set;
 import java.util.concurrent.*;
 
 

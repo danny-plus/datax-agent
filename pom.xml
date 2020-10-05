@@ -9,6 +9,8 @@
         <module>datax-split/datax-split-oraclereader</module>
         <module>datax-split/datax-split-hbase11reader</module>
         <module>datax-agent-monitor</module>
+        <module>datax-agent-executor</module>
+        <module>datax-agent-common</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>

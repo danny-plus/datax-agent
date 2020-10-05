@@ -1,7 +1,6 @@
 package ni.danny.dataxagent.service;
 
-import ni.danny.dataxagent.dto.DataxDTO;
-import ni.danny.dataxsplit.base.enums.DataxSplitTypeEnum;
+import ni.danny.dataxagent.common.dto.DataxDTO;
 
 import java.util.List;
 

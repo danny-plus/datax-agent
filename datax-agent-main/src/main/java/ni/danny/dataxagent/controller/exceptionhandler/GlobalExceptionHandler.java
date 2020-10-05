@@ -1,7 +1,7 @@
 package ni.danny.dataxagent.controller.exceptionhandler;
 
-import ni.danny.dataxagent.dto.ResponseDTO;
-import ni.danny.dataxagent.dto.resp.ExceptionRespDTO;
+import ni.danny.dataxagent.common.dto.ResponseDTO;
+import ni.danny.dataxagent.common.dto.resp.ExceptionRespDTO;
 import ni.danny.dataxagent.enums.RespDTOEnum;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;

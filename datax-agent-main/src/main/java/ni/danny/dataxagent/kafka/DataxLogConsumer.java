@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.constant.DataxJobConstant;
 import ni.danny.dataxagent.constant.ZookeeperConstant;
 
-import ni.danny.dataxagent.dto.DataxLogDTO;
+import ni.danny.dataxagent.common.dto.DataxLogDTO;
 import ni.danny.dataxagent.enums.ExecutorTaskStatusEnum;
 import org.apache.kafka.common.record.Record;
 import org.springframework.beans.factory.annotation.Autowired;

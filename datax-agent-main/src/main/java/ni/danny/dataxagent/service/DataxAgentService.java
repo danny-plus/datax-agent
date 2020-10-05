@@ -1,7 +1,7 @@
 package ni.danny.dataxagent.service;
 
 import ni.danny.dataxagent.callback.ExecutorDataxJobCallback;
-import ni.danny.dataxagent.dto.DataxDTO;
+import ni.danny.dataxagent.common.dto.DataxDTO;
 import ni.danny.dataxagent.exception.DataxAgentException;
 
 import java.io.IOException;

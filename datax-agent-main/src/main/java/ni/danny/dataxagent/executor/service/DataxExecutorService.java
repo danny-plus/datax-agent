@@ -1,6 +1,6 @@
 package ni.danny.dataxagent.executor.service;
 
-import ni.danny.dataxagent.dto.DataxExecutorTaskDTO;
+import ni.danny.dataxagent.common.dto.DataxExecutorTaskDTO;
 import ni.danny.dataxagent.executor.dto.event.ExecutorEventDTO;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.CuratorCacheListener;

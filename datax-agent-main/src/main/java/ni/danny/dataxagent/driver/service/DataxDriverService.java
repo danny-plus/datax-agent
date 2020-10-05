@@ -5,7 +5,6 @@ import ni.danny.dataxagent.driver.dto.JobTaskDTO;
 import ni.danny.dataxagent.driver.dto.event.DriverEventDTO;
 import ni.danny.dataxagent.driver.dto.event.DriverExecutorEventDTO;
 import ni.danny.dataxagent.driver.dto.event.DriverJobEventDTO;
-import ni.danny.dataxagent.dto.DataxDTO;
 
 public interface DataxDriverService {
     /**

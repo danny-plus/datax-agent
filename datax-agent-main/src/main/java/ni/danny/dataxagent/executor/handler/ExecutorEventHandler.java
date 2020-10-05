@@ -2,9 +2,7 @@ package ni.danny.dataxagent.executor.handler;
 
 import com.lmax.disruptor.EventHandler;
 import lombok.extern.slf4j.Slf4j;
-import ni.danny.dataxagent.dto.DataxExecutorTaskDTO;
 import ni.danny.dataxagent.executor.dto.event.ExecutorEvent;
-import ni.danny.dataxagent.executor.producer.ExecutorEventProducerWithTranslator;
 import ni.danny.dataxagent.executor.service.DataxExecutorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;

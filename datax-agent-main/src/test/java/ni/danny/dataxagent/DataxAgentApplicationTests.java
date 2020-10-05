@@ -2,7 +2,7 @@ package ni.danny.dataxagent;
 
 
 import com.google.gson.Gson;
-import ni.danny.dataxagent.dto.splitStrategy.SplitStrategyDTO;
+import ni.danny.dataxagent.common.dto.splitStrategy.SplitStrategyDTO;
 
 class DataxAgentApplicationTests {
     public static void main(String[] args){
