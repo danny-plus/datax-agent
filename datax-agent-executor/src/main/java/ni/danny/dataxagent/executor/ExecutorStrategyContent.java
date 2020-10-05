@@ -1,5 +1,5 @@
 package ni.danny.dataxagent.executor;
 import ni.danny.dataxagent.common.dto.*;
 public interface ExecutorStrategyContent {
-    void execute(DataxDTO dataxDTO,ExecutorCallback callback) throws Throwable;
+    void execute(String executor,String jobId,Integer taskId,String scriptPath,ExecutorCallback callback) throws Throwable;
 }

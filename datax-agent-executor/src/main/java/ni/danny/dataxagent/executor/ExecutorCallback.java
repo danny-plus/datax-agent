@@ -6,4 +6,5 @@ package ni.danny.dataxagent.executor;
 public interface ExecutorCallback {
     void success();
     void fail();
+    void throwException(Throwable throwable);
 }

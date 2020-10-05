@@ -14,6 +14,4 @@ public class DataxDTO {
     private JobDTO job;
     private String jobId;
     private Integer taskId;
-    //shell or jar
-    private String executor;
 }
