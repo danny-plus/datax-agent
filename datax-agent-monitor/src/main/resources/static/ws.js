@@ -3,24 +3,21 @@ var stompClient = null;
 // 设置 WebSocket 进入端点
 var SOCKET_ENDPOINT = "/datax-agent-monitor/ws";
 // 设置订阅消息的请求前缀
-var SUBSCRIBE_PREFIX = "/topic/"
+var SUBSCRIBE_PREFIX = "/job/"
+var ALL_JOB_SUSCRIBE = "/allJob"
 // 设置订阅消息的请求地址
 var SUBSCRIBE = "";
 
 /* 进行连接 */
-function connect() {
+function connect(func) {
     // 设置 SOCKET
     $("#connectBtn").addClass("disabled")
-
     var socket = new SockJS(SOCKET_ENDPOINT);
     // 配置 STOMP 客户端
     stompClient = Stomp.over(socket);
     // STOMP 客户端连接
     stompClient.connect({}, function (frame) {
-        alert("连接成功");
-        $("#disConnectBtn").removeClass("disabled")
-        $("#subBtn").removeClass("disabled")
-
+        func();
     });
 }
 
@@ -31,7 +28,7 @@ function subscribeSocket(){
     // 设置订阅地址
     SUBSCRIBE = SUBSCRIBE_PREFIX + $("#subscribe").val();
     // 输出订阅地址
-    alert("设置订阅地址为：" + SUBSCRIBE);
+    //alert("设置订阅地址为：" + SUBSCRIBE);
     $("#subBtn").addClass("disabled")
     $("#unSubBtn").removeClass("disabled")
     // 执行订阅消息
@@ -43,15 +40,21 @@ function subscribeSocket(){
     });
 }
 
-function unSubscribeSocket(){
-    stompClient.unsubscribe()
-    SUBSCRIBE=""
-    $("#subBtn").removeClass("disabled")
-    $("#unSubBtn").addClass("disabled")
-    $("#subscribe").val("");
-    alert("解除订阅成功");
 
+function subscribeJob(jobId,func){
+    SUBSCRIBE = SUBSCRIBE_PREFIX + jobId;
+    stompClient.subscribe(SUBSCRIBE, function (responseBody) {
+        func(responseBody.body)
+    });
 }
+
+function subscribeAllJob(func){
+    stompClient.subscribe(ALL_JOB_SUSCRIBE, function (responseBody) {
+        let jobSummary = JSON.parse(responseBody.body);
+        func(jobSummary)
+    });
+}
+
 
 /* 断开连接 */
 function disconnect() {

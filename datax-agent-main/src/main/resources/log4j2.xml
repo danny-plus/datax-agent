@@ -5,7 +5,7 @@
         <PatternLayout pattern = "%d{HH:mm:ss.SSS} {%t} %-5level %c{1.} - %msg%n" />
     </Console>
     <Kafka name="KafkaLog" topic="datax-log" ignoreExceptions="false">
-        <PatternLayout pattern="%X{DATAX-JOBID}-%X{DATAX-TASKID}-%X{DATAX-STATUS}-%X{SOFA-TraceId}-%d{HH:mm:ss.SSS}-%msg%n "/>
+        <PatternLayout pattern="%d{HH:mm:ss.SSS}-%X{DATAX-JOBID}-%X{DATAX-TASKID}-%X{DATAX-STATUS}-%X{SOFA-TraceId}-%msg%n "/>
         <Property name="bootstrap.servers">192.168.101.20:9092,192.168.101.21:9092,192.168.101.22:9092</Property>
         <Property name="max.block.ms">2000</Property>
     </Kafka>

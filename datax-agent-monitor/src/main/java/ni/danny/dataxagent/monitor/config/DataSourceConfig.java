@@ -5,7 +5,7 @@ import com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceBuilder;
 import com.alibaba.druid.support.spring.stat.DruidStatInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import ni.danny.dataxagent.monitor.enums.DataBaseType;
-import ni.danny.dataxagent.monitor.util.InstallUtils;
+import ni.danny.dataxagent.monitor.util.DatabaseChooseUtils;
 import ni.danny.dataxagent.monitor.util.PropertiesUtils;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.aop.support.JdkRegexpMethodPointcut;
@@ -53,7 +53,7 @@ public class DataSourceConfig {
         Map<Object,Object> targetDataSource = new HashMap<>(2);
         targetDataSource.put(DataBaseType.H2.name(),h2DataSource);
         targetDataSource.put(DataBaseType.MYSQL.name(),mysqlDataSource);
-        if(InstallUtils.isInstall()){
+        if(DataBaseType.MYSQL==DatabaseChooseUtils.getDBType()){
             return new DynamicDataSource(mysqlDataSource,targetDataSource);
         }else{
             return new DynamicDataSource(h2DataSource,targetDataSource);
@@ -69,7 +69,7 @@ public class DataSourceConfig {
     @Scope("prototype")
     public JdkRegexpMethodPointcut jdkRegexpMethodPointcut(){
         JdkRegexpMethodPointcut pointcut = new JdkRegexpMethodPointcut();
-        pointcut.setPatterns("com.ramostear.blogdemo.*");
+        pointcut.setPatterns("ni.danny.dataxagent.monitor.*");
         return pointcut;
     }
 

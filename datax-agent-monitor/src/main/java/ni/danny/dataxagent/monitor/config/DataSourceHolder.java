@@ -1,7 +1,6 @@
 package ni.danny.dataxagent.monitor.config;
 
-import ni.danny.dataxagent.monitor.enums.DataBaseType;
-import ni.danny.dataxagent.monitor.util.InstallUtils;
+import ni.danny.dataxagent.monitor.util.DatabaseChooseUtils;
 
 public class DataSourceHolder {
     private static final ThreadLocal<String> DATASOURCE = new ThreadLocal<>();
@@ -11,10 +10,6 @@ public class DataSourceHolder {
     }
 
     public static String getDatasource(){
-        if(InstallUtils.isInstall()){
-            return DataBaseType.MYSQL.name();
-        }else{
-            return DataBaseType.H2.name();
-        }
+           return DatabaseChooseUtils.getDBType().name();
     }
 }
