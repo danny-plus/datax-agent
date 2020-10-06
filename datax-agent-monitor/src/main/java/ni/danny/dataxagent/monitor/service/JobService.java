@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface JobService {
     List<DataxJobSummaryDTO> getAllJob() throws Exception;
-    List<String> getJobLogs() throws Exception;
+    List<String> getJobLogs(String jobId) throws Exception;
 }

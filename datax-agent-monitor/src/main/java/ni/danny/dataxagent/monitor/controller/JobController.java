@@ -7,6 +7,7 @@ import ni.danny.dataxagent.monitor.dto.resp.SuccessRespDTO;
 import ni.danny.dataxagent.monitor.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -24,8 +25,8 @@ public class JobController {
     }
 
     @GetMapping("/jobLogs")
-    public RespDTO<List<String>> getJobLogs() throws Exception{
-        return new SuccessRespDTO<List<String>>().data(jobService.getJobLogs());
+    public RespDTO<List<String>> getJobLogs(@RequestParam String jobId) throws Exception{
+        return new SuccessRespDTO<List<String>>().data(jobService.getJobLogs(jobId));
     }
 
 }
